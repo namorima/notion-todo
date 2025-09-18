@@ -85,3 +85,7 @@ Thumbs.db
 # Logs
 logs
 *.log
+
+# claude file
+.claude/
+claude.md
