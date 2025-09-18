@@ -1,8 +1,7 @@
 import fetch from "node-fetch";
-import readline from "readline";
+import { select, input, confirm } from "@inquirer/prompts";
 import chalk from "chalk";
 import boxen from "boxen";
-import prompts from "prompts";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -21,18 +20,104 @@ if (!notion_api_key || !database_id) {
   process.exit(1);
 }
 
-// Setup readline untuk input
-let rl;
 
 // Pagination variables
 let currentPage = 0;
 const itemsPerPage = 20;
 let allTodos = [];
 
+// Helper function to get formatted dates
+function getDateOptions() {
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 7);
+
+  const nextMonth = new Date(today);
+  nextMonth.setMonth(today.getMonth() + 1);
+
+  const formatDate = (date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  return {
+    today: formatDate(today),
+    tomorrow: formatDate(tomorrow),
+    nextWeek: formatDate(nextWeek),
+    nextMonth: formatDate(nextMonth)
+  };
+}
+
+// Simple progress bar class using console
+class ProgressBar {
+  constructor(message) {
+    this.message = message;
+    this.dots = "";
+    this.isRunning = false;
+    this.interval = null;
+    this.currentLine = "";
+  }
+
+  start() {
+    if (this.isRunning) return;
+    this.isRunning = true;
+
+    // Clear any existing line
+    process.stdout.write("\x1b[2K\r");
+
+    this.interval = setInterval(() => {
+      this.dots = this.dots.length >= 3 ? "" : this.dots + ".";
+      this.currentLine = chalk.cyan(`🔄 ${this.message}${this.dots}`);
+      process.stdout.write(`\x1b[2K\r${this.currentLine}`);
+    }, 500);
+  }
+
+  update(newMessage) {
+    this.message = newMessage;
+    if (this.isRunning) {
+      this.dots = "";
+      this.currentLine = chalk.cyan(`🔄 ${this.message}${this.dots}`);
+      process.stdout.write(`\x1b[2K\r${this.currentLine}`);
+    }
+  }
+
+  stop() {
+    if (!this.isRunning) return;
+    this.isRunning = false;
+
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+
+    // Clear the progress line
+    process.stdout.write("\x1b[2K\r");
+  }
+}
+
+// Show progress bar helper function
+function showProgress(message) {
+  const progressBar = new ProgressBar(message);
+  progressBar.start();
+
+  return {
+    update: (newMessage) => {
+      progressBar.update(newMessage);
+    },
+    stop: () => {
+      progressBar.stop();
+    }
+  };
+}
+
 // Fungsi untuk tambah todo baru
 async function addTodo(taskName, kategori = null) {
+  const progress = showProgress("Menambah todo baru");
+
   const url = `https://api.notion.com/v1/pages`;
-  
+
   const headers = {
     "Authorization": `Bearer ${notion_api_key}`,
     "Notion-Version": "2022-06-28",
@@ -61,27 +146,34 @@ async function addTodo(taskName, kategori = null) {
   };
 
   try {
+    progress.update("Menghantar data ke Notion");
     const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(body)
     });
 
+    progress.update("Memproses respons");
     if (res.ok) {
+      progress.stop();
       console.log(chalk.green(`✅ Todo "${taskName}" berjaya ditambah!`));
     } else {
       const error = await res.json();
+      progress.stop();
       console.log(chalk.red(`❌ Error: ${error.message}`));
     }
   } catch (err) {
+    progress.stop();
     console.log(chalk.red(`❌ Error: ${err.message}`));
   }
 }
 
 // Fungsi untuk tambah todo dengan due date
 async function addTodoWithDueDate(taskName, kategori = null, dueDate = null) {
+  const progress = showProgress("Menambah todo dengan due date");
+
   const url = `https://api.notion.com/v1/pages`;
-  
+
   const headers = {
     "Authorization": `Bearer ${notion_api_key}`,
     "Notion-Version": "2022-06-28",
@@ -117,27 +209,34 @@ async function addTodoWithDueDate(taskName, kategori = null, dueDate = null) {
   };
 
   try {
+    progress.update("Menghantar data ke Notion");
     const res = await fetch(url, {
       method: "POST",
       headers,
       body: JSON.stringify(body)
     });
 
+    progress.update("Memproses respons");
     if (res.ok) {
+      progress.stop();
       console.log(chalk.green(`✅ Todo "${taskName}" dengan due date berjaya ditambah!`));
     } else {
       const error = await res.json();
+      progress.stop();
       console.log(chalk.red(`❌ Error: ${error.message}`));
     }
   } catch (err) {
+    progress.stop();
     console.log(chalk.red(`❌ Error: ${err.message}`));
   }
 }
 
 // Fungsi untuk update status todo
 async function updateTodoStatus(pageId, status) {
+  const progress = showProgress("Mengemas kini status todo");
+
   const url = `https://api.notion.com/v1/pages/${pageId}`;
-  
+
   const headers = {
     "Authorization": `Bearer ${notion_api_key}`,
     "Notion-Version": "2022-06-28",
@@ -153,23 +252,25 @@ async function updateTodoStatus(pageId, status) {
   };
 
   try {
+    progress.update("Menghantar kemaskini ke Notion");
     const res = await fetch(url, {
       method: "PATCH",
       headers,
       body: JSON.stringify(body)
     });
 
+    progress.update("Memproses respons");
     if (res.ok) {
-      console.log(chalk.green(`✅ Todo #${allTodos.findIndex(todo => todo.id === pageId) + 1} status updated to "${status}"!`));
-      return true;
+      progress.stop();
+      return { success: true, message: `✅ Todo #${allTodos.findIndex(todo => todo.id === pageId) + 1} status updated to "${status}"!` };
     } else {
       const error = await res.json();
-      console.log(chalk.red(`❌ Error: ${error.message}`));
-      return false;
+      progress.stop();
+      return { success: false, message: `❌ Error: ${error.message}` };
     }
   } catch (err) {
-    console.log(chalk.red(`❌ Error: ${err.message}`));
-    return false;
+    progress.stop();
+    return { success: false, message: `❌ Error: ${err.message}` };
   }
 }
 
@@ -193,6 +294,8 @@ function checkReminders(data) {
         if (kategori) {
           if (kategori === "Penting") {
             kategoriText = ` 🔥[${kategori}]`;
+          } else if (kategori === "Segera") {
+            kategoriText = ` ⚡[${kategori}]`;
           } else {
             kategoriText = ` [${kategori}]`;
           }
@@ -217,6 +320,8 @@ function clearConsole() {
 
 // Fungsi untuk load data
 async function loadTodos() {
+  const progress = showProgress("Memuat data todos");
+
   const url = `https://api.notion.com/v1/databases/${database_id}/query`;
 
   const headers = {
@@ -225,22 +330,30 @@ async function loadTodos() {
     "Content-Type": "application/json"
   };
 
-  // Query database
-  const res = await fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      sorts: [
-        {
-          property: "status",
-          direction: "ascending" // "Not started" akan atas, "Done" bawah
-        }
-      ]
-    })
-  });
+  try {
+    progress.update("Menyambung ke Notion");
+    // Query database
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        sorts: [
+          {
+            property: "status",
+            direction: "ascending" // "Not started" akan atas, "Done" bawah
+          }
+        ]
+      })
+    });
 
-  const data = await res.json();
-  allTodos = data.results;
+    progress.update("Memproses data");
+    const data = await res.json();
+    allTodos = data.results;
+    progress.stop();
+  } catch (error) {
+    progress.stop();
+    console.log(chalk.red(`❌ Error loading todos: ${error.message}`));
+  }
 }
 
 // Fungsi untuk papar todos dengan pagination
@@ -290,11 +403,13 @@ function displayTodos() {
         }
       }
       
-      // Format kategori dengan simbol khusus untuk "Penting"
+      // Format kategori dengan simbol khusus untuk "Penting" dan "Segera"
       let kategoriText = "";
       if (kategori) {
         if (kategori === "Penting") {
           kategoriText = ` ${chalk.red.bold("🔥[" + kategori + "]")}`; // Fire emoji untuk penting
+        } else if (kategori === "Segera") {
+          kategoriText = ` ${chalk.yellow.bold("⚡[" + kategori + "]")}`; // Lightning emoji untuk segera
         } else {
           kategoriText = ` ${chalk.blue("[" + kategori + "]")}`;
         }
@@ -318,98 +433,69 @@ async function main() {
 }
 
 // Function untuk menu selepas papar todos
-function showOptions() {
-  // Options menu tanpa border
-  console.log(chalk.white.bold("\nOptions:"));
-  
+async function showOptions() {
   const totalPages = Math.ceil(allTodos.length / itemsPerPage);
-  console.log(chalk.blue("2. Tambah todo baru"));
-  console.log(chalk.blue("3. Tambah todo dengan due date"));
-  console.log(chalk.green("#done <number>. Mark todo as Done"));
-  
+
+  // Build options array dynamically
+  const choices = [
+    { name: "➕ Tambah todo baru", value: "add" },
+    { name: "📅 Tambah todo dengan due date", value: "addWithDate" },
+    { name: "✅ Mark todo as Done", value: "markDone" },
+    { name: "🔄 Restart application", value: "restart" }
+  ];
+
+  // Add pagination options if needed
   if (totalPages > 1) {
     if (currentPage < totalPages - 1) {
-      console.log(chalk.blue("> Next page"));
+      choices.push({ name: "▶️  Next page", value: "next" });
     }
     if (currentPage > 0) {
-      console.log(chalk.blue("< Previous page"));
+      choices.push({ name: "◀️  Previous page", value: "previous" });
     }
   }
-  console.log(chalk.red("6. Exit"));
-  
-  // Create readline interface for single key navigation
-  rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  
-  const promptText = chalk.bold.yellow("Select option (or #done <number>): ");
-  rl.question(promptText, async (choice) => {
-    const input = choice.trim();
-    
-    // Check for #done command
-    if (input.startsWith('#done ')) {
-      const todoNumber = parseInt(input.split(' ')[1]);
-      if (isNaN(todoNumber) || todoNumber < 1 || todoNumber > allTodos.length) {
-        console.log(chalk.red(`❌ Invalid todo number! Please use a number between 1-${allTodos.length}`));
-        rl.close();
-        showOptions();
-        return;
-      }
-      
-      // Get the actual todo index considering pagination
-      const todoIndex = todoNumber - 1;
-      const todoToUpdate = allTodos[todoIndex];
-      
-      rl.close();
-      const success = await updateTodoStatus(todoToUpdate.id, "Done");
-      if (success) {
-        await loadTodos(); // Reload data
-        clearConsole(); // Clear console for clean display
-        displayTodos(); // Refresh display
-      }
-      showOptions();
-      return;
-    }
-    
-    switch (input) {
-      case '2':
-        rl.close();
+
+  choices.push({ name: "❌ Exit", value: "exit" });
+
+  try {
+    const choice = await select({
+      message: chalk.bold.yellow("⚙️  Select an option:"),
+      choices: choices
+    });
+
+    switch (choice) {
+      case "add":
         await handleAddTodo();
         break;
-      case '3':
-        rl.close();
+      case "addWithDate":
         await handleAddTodoWithDueDate();
         break;
-      case '>':
-        rl.close();
-        // Next page
+      case "markDone":
+        await handleMarkDone();
+        break;
+      case "restart":
+        console.log(chalk.yellow("🔄 Restarting application..."));
+        currentPage = 0;
+        await loadTodos();
+        displayTodos();
+        await showOptions();
+        break;
+      case "next":
         if (currentPage < totalPages - 1) {
           currentPage++;
+          await loadTodos();
           displayTodos();
-          showOptions();
-        } else {
-          console.log(chalk.red("❌ Sudah di halaman terakhir!"));
-          setTimeout(() => {
-            showOptions();
-          }, 1000);
+          await showOptions();
         }
         break;
-      case '<':
-        rl.close();
-        // Previous page
+      case "previous":
         if (currentPage > 0) {
           currentPage--;
+          await loadTodos();
           displayTodos();
-          showOptions();
-        } else {
-          console.log(chalk.red("❌ Sudah di halaman pertama!"));
-          setTimeout(() => {
-            showOptions();
-          }, 1000);
+          await showOptions();
         }
         break;
-      case '6':
+      case "exit":
         const goodbyeBox = boxen(chalk.green.bold("👋 Goodbye!"), {
           padding: 1,
           margin: 1,
@@ -417,102 +503,205 @@ function showOptions() {
           borderColor: "green"
         });
         console.log(goodbyeBox);
-        rl.close();
         process.exit(0);
         break;
-      default:
-        console.log(chalk.red("❌ Pilihan tidak sah!"));
-        rl.close();
-        showOptions();
-        break;
     }
+  } catch (error) {
+    if (error.name === 'ExitPromptError') {
+      process.exit(0);
+    }
+    console.log(chalk.red("❌ Error occurred:", error.message));
+    await showOptions();
+  }
+}
+
+// Function untuk handle mark todo as done
+async function handleMarkDone() {
+  console.log(chalk.bold.yellow("\n✅ MARK TODO AS DONE"));
+  console.log(chalk.gray("(Tekan ESC untuk kembali ke menu utama)\n"));
+
+  if (allTodos.length === 0) {
+    console.log(chalk.red("❌ Tiada todos untuk di-mark!"));
+    await showOptions();
+    return;
+  }
+
+  // Create choices from current todos with better formatting
+  const choices = allTodos.map((todo, index) => {
+    const name = todo.properties["name"]?.title?.[0]?.plain_text || "Untitled";
+    const status = todo.properties["status"]?.status?.name || "Unknown";
+    const kategori = todo.properties["kategori"]?.select?.name || "";
+
+    let statusIcon = status === "Done" ? "✅" : "⏳";
+    let kategoriText = "";
+    if (kategori) {
+      if (kategori === "Penting") {
+        kategoriText = ` 🔥[${kategori}]`;
+      } else if (kategori === "Segera") {
+        kategoriText = ` ⚡[${kategori}]`;
+      } else if (kategori === "Pribadi") {
+        kategoriText = ` 👤[${kategori}]`;
+      } else {
+        kategoriText = ` [${kategori}]`;
+      }
+    }
+
+    return {
+      name: `${statusIcon} ${name}${kategoriText}`,
+      value: todo.id,
+      disabled: status === "Done" ? "Already completed" : false
+    };
   });
+
+  try {
+    const selectedTodoId = await select({
+      message: chalk.blue("🎯 Select todo to mark as done:"),
+      choices: choices,
+      pageSize: 15
+    });
+
+    const result = await updateTodoStatus(selectedTodoId, "Done");
+
+    if (result.success) {
+      await loadTodos();
+      displayTodos();
+      console.log(chalk.green(result.message));
+    } else {
+      console.log(chalk.red(result.message));
+    }
+
+    await showOptions();
+  } catch (error) {
+    if (error.name === 'ExitPromptError') {
+      await showOptions();
+    } else {
+      console.log(chalk.red("❌ Error:", error.message));
+      await showOptions();
+    }
+  }
 }
 
 // Function untuk handle add todo
 async function handleAddTodo() {
-  const addTodoHeader = boxen(chalk.bold.green("➕ TAMBAH TODO BARU"), {
-    padding: 1,
-    margin: 1,
-    borderStyle: "round",
-    borderColor: "green"
-  });
-  console.log(addTodoHeader);
+  console.log(chalk.bold.green("\n➕ TAMBAH TODO BARU"));
+  console.log(chalk.gray("(Tekan ESC untuk kembali ke menu utama)\n"));
 
-  rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+  try {
+    const taskName = await input({
+      message: chalk.blue("📝 Masukkan nama task:")
+    });
 
-  rl.question(chalk.cyan("📝 Masukkan nama task: "), (taskName) => {
     if (!taskName.trim()) {
       console.log(chalk.red("❌ Nama task tidak boleh kosong!"));
-      rl.close();
-      showOptions();
+      await showOptions();
       return;
     }
-    
-    rl.question(chalk.blue("🏷️  Masukkan kategori (kosongkan jika tiada): "), async (kategori) => {
-      const kat = kategori.trim() || null;
-      await addTodo(taskName.trim(), kat);
-      await loadTodos();
-      displayTodos();
-      rl.close();
-      showOptions();
+
+    const kategori = await select({
+      message: chalk.blue("🏷️  Pilih kategori:"),
+      choices: [
+        { name: "⚡ Segera", value: "Segera" },
+        { name: "🔥 Penting", value: "Penting" },
+        { name: "👤 Pribadi", value: "Pribadi" },
+        { name: "📝 Tiada kategori", value: null }
+      ]
     });
-  });
+
+    await addTodo(taskName.trim(), kategori);
+    await loadTodos();
+    displayTodos();
+    await showOptions();
+  } catch (error) {
+    if (error.name === 'ExitPromptError') {
+      await showOptions();
+    } else {
+      console.log(chalk.red("❌ Error:", error.message));
+      await showOptions();
+    }
+  }
 }
 
 // Function untuk handle add todo with due date
 async function handleAddTodoWithDueDate() {
-  const addTodoHeader = boxen(chalk.bold.blue("📅 TAMBAH TODO DENGAN DUE DATE"), {
-    padding: 1,
-    margin: 1,
-    borderStyle: "round",
-    borderColor: "blue"
-  });
-  console.log(addTodoHeader);
+  console.log(chalk.bold.blue("\n📅 TAMBAH TODO DENGAN DUE DATE"));
+  console.log(chalk.gray("(Tekan ESC untuk kembali ke menu utama)\n"));
 
-  rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
+  try {
+    const taskName = await input({
+      message: chalk.blue("📝 Masukkan nama task:")
+    });
 
-  rl.question(chalk.cyan("📝 Masukkan nama task: "), (taskName) => {
     if (!taskName.trim()) {
       console.log(chalk.red("❌ Nama task tidak boleh kosong!"));
-      rl.close();
-      showOptions();
+      await showOptions();
       return;
     }
-    
-    rl.question(chalk.blue("🏷️  Masukkan kategori (kosongkan jika tiada): "), (kategori) => {
-      rl.question(chalk.yellow("📅 Masukkan due date (YYYY-MM-DD, contoh: 2025-09-15): "), async (dueDate) => {
-        // Validate date format
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (dueDate.trim() && !dateRegex.test(dueDate.trim())) {
-          console.log(chalk.red("❌ Format tarikh tidak betul! Gunakan YYYY-MM-DD"));
-          rl.close();
-          showOptions();
-          return;
-        }
-        
-        const kat = kategori.trim() || null;
-        const due = dueDate.trim() || null;
-        await addTodoWithDueDate(taskName.trim(), kat, due);
-        await loadTodos();
-        displayTodos();
-        rl.close();
-        showOptions();
-      });
+
+    const kategori = await select({
+      message: chalk.blue("🏷️  Pilih kategori:"),
+      choices: [
+        { name: "⚡ Segera", value: "Segera" },
+        { name: "🔥 Penting", value: "Penting" },
+        { name: "👤 Pribadi", value: "Pribadi" },
+        { name: "📝 Tiada kategori", value: null }
+      ]
     });
-  });
+
+    // Get date options
+    const dates = getDateOptions();
+
+    const dateChoice = await select({
+      message: chalk.blue("📅 Pilih due date:"),
+      choices: [
+        { name: `📅 Hari ini (${dates.today})`, value: dates.today },
+        { name: `🌅 Esok (${dates.tomorrow})`, value: dates.tomorrow },
+        { name: `📆 Minggu depan (${dates.nextWeek})`, value: dates.nextWeek },
+        { name: `🗓️  Bulan depan (${dates.nextMonth})`, value: dates.nextMonth },
+        { name: "✏️  Masukkan tarikh custom", value: "custom" },
+        { name: "🚫 Tiada due date", value: null }
+      ]
+    });
+
+    let dueDate = dateChoice;
+
+    // If custom date is selected, ask for manual input
+    if (dateChoice === "custom") {
+      dueDate = await input({
+        message: chalk.blue("📅 Masukkan due date (YYYY-MM-DD, contoh: 2025-09-15):"),
+        default: dates.today
+      });
+    }
+
+    // Validate date format only for custom input
+    if (dateChoice === "custom" && dueDate) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dueDate.trim() && !dateRegex.test(dueDate.trim())) {
+        console.log(chalk.red("❌ Format tarikh tidak betul! Gunakan YYYY-MM-DD"));
+        await showOptions();
+        return;
+      }
+      dueDate = dueDate.trim() || null;
+    }
+
+    const due = dueDate;
+    await addTodoWithDueDate(taskName.trim(), kategori, due);
+    await loadTodos();
+    displayTodos();
+    await showOptions();
+  } catch (error) {
+    if (error.name === 'ExitPromptError') {
+      await showOptions();
+    } else {
+      console.log(chalk.red("❌ Error:", error.message));
+      await showOptions();
+    }
+  }
 }
 
 // Mulakan aplikasi - papar todos dulu, kemudian tunjuk options
 async function startApp() {
   await main();
-  showOptions();
+  await showOptions();
 }
 
 startApp();
