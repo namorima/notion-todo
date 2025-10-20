@@ -817,6 +817,17 @@
         font-weight: 500;
       }
 
+      .day-count {
+        margin-left: 8px;
+        padding: 2px 8px;
+        background: #667eea;
+        color: white;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
       .calendar-layout {
         display: grid;
         grid-template-columns: 1fr 400px;
@@ -1381,6 +1392,7 @@
             <div
               class="calendar-item <%= event.selesai ? 'done' : '' %>"
               data-date="<%= event.date %>"
+              data-date-end="<%= event.dateEnd || '' %>"
               data-name="<%= event.name %>"
             >
               <div class="calendar-content">
@@ -1448,6 +1460,14 @@
                   <% if (event.location) { %>
                   <div class="calendar-location">
                     <i data-lucide="map-pin" class="icon-xs"></i> <%= event.location %>
+                    <% if (event.dateEnd) {
+                      const start = new Date(event.dateStart);
+                      const end = new Date(event.dateEnd);
+                      const diffTime = Math.abs(end - start);
+                      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                    %>
+                    <span class="day-count">(<%=diffDays%> hari)</span>
+                    <% } %>
                   </div>
                   <% } %> <% event.tags.forEach(tag => { %>
                   <span class="tag-badge"><%= tag %></span>
@@ -1737,7 +1757,21 @@
           dayEl.classList.add('weekend');
         }
 
-        const eventsOnDate = calendarEvents.filter(e => e.date === dateStr);
+        // Check for events on this date (including multi-day events)
+        const eventsOnDate = calendarEvents.filter(e => {
+          // Check if date is the start date
+          if (e.date === dateStr) return true;
+
+          // Check if date is within a multi-day event range
+          if (e.dateEnd) {
+            const currentDate = new Date(dateStr);
+            const startDate = new Date(e.date);
+            const endDate = new Date(e.dateEnd);
+            return currentDate >= startDate && currentDate <= endDate;
+          }
+
+          return false;
+        });
         const hasEvent = eventsOnDate.length > 0;
 
         if (hasEvent) {
@@ -1823,6 +1857,7 @@
         const allEvents = document.querySelectorAll('.calendar-item');
         calendarEvents = Array.from(allEvents).map(item => ({
           date: item.dataset.date,
+          dateEnd: item.dataset.dateEnd || null,
           name: item.dataset.name
         }));
 
