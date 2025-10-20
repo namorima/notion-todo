@@ -29,7 +29,7 @@ app.use(session({
   cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
 }));
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', __dirname); // Views now in root folder
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware to check authentication
