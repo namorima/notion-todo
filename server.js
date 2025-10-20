@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
+import session from 'express-session';
 
 dotenv.config();
 
@@ -17,12 +18,30 @@ const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const DATABASE_ID = process.env.DATABASE_ID;
 const CALENDAR_DATABASE_ID = process.env.CALENDAR_DATABASE_ID;
 const HOLIDAY_STATE = process.env.HOLIDAY_STATE || 'Kelantan';
+const APP_PASSWORD = process.env.APP_PASSWORD || 'akmal';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: 'notion-manager-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+}));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware to check authentication
+function requireAuth(req, res, next) {
+  console.log('🔒 Auth check - authenticated:', req.session.authenticated);
+  if (req.session.authenticated) {
+    next();
+  } else {
+    console.log('⛔ Not authenticated, redirecting to /login');
+    res.redirect('/login');
+  }
+}
 
 // Helper function to get category emoji
 function getCategoryEmoji(category) {
@@ -72,8 +91,47 @@ function formatCreatedTime(dateStr) {
   return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// Login page
+app.get('/login', (req, res) => {
+  console.log('📋 Login page accessed');
+  if (req.session.authenticated) {
+    console.log('✅ User already authenticated, redirecting to /');
+    return res.redirect('/');
+  }
+  console.log('🔐 Showing login page');
+  res.render('login', { error: null });
+});
+
+// Login authentication
+app.post('/login', (req, res) => {
+  const { password } = req.body;
+  console.log('🔑 Login attempt');
+
+  if (password === APP_PASSWORD) {
+    req.session.authenticated = true;
+    console.log('✅ Login successful');
+    res.redirect('/');
+  } else {
+    console.log('❌ Login failed - wrong password');
+    res.render('login', { error: 'Password salah! Sila cuba lagi.' });
+  }
+});
+
+// Logout
+app.get('/logout', (req, res) => {
+  console.log('🚪 Logout requested');
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('❌ Error destroying session:', err);
+    } else {
+      console.log('✅ Session destroyed, redirecting to login');
+    }
+    res.redirect('/login');
+  });
+});
+
 // Get all todos and calendar events
-app.get('/', async (req, res) => {
+app.get('/', requireAuth, async (req, res) => {
   try {
     // Fetch Todos
     const todoResponse = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
@@ -203,7 +261,7 @@ app.get('/', async (req, res) => {
 });
 
 // Add new todo
-app.post('/add', async (req, res) => {
+app.post('/add', requireAuth, async (req, res) => {
   try {
     const { name, category, dueDate } = req.body;
 
@@ -249,7 +307,7 @@ app.post('/add', async (req, res) => {
 });
 
 // Edit todo
-app.post('/edit', async (req, res) => {
+app.post('/edit', requireAuth, async (req, res) => {
   try {
     const { id, name, category, dueDate } = req.body;
 
@@ -297,7 +355,7 @@ app.post('/edit', async (req, res) => {
 });
 
 // Mark as done
-app.post('/done/:id', async (req, res) => {
+app.post('/done/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -325,7 +383,7 @@ app.post('/done/:id', async (req, res) => {
 });
 
 // Delete todo
-app.post('/delete/:id', async (req, res) => {
+app.post('/delete/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -349,7 +407,7 @@ app.post('/delete/:id', async (req, res) => {
 });
 
 // Add new calendar event
-app.post('/calendar/add', async (req, res) => {
+app.post('/calendar/add', requireAuth, async (req, res) => {
   try {
     const { name, dateStart, dateEnd, location, tags } = req.body;
 
@@ -398,7 +456,7 @@ app.post('/calendar/add', async (req, res) => {
 });
 
 // Edit calendar event
-app.post('/calendar/edit', async (req, res) => {
+app.post('/calendar/edit', requireAuth, async (req, res) => {
   try {
     const { id, name, dateStart, dateEnd, location, tags } = req.body;
 
@@ -452,7 +510,7 @@ app.post('/calendar/edit', async (req, res) => {
 });
 
 // Mark calendar event as done
-app.post('/calendar/done/:id', async (req, res) => {
+app.post('/calendar/done/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -480,7 +538,7 @@ app.post('/calendar/done/:id', async (req, res) => {
 });
 
 // Delete calendar event
-app.post('/calendar/delete/:id', async (req, res) => {
+app.post('/calendar/delete/:id', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Login/Logout Functionality</h1>
+
+    <div class="test-section">
+        <h2>1. Test Login Page</h2>
+        <button onclick="testLoginPage()">Test /login</button>
+        <div id="login-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Test Login POST</h2>
+        <button onclick="testLoginPost()">Login with password</button>
+        <div id="loginpost-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Test Root Access (requires login)</h2>
+        <button onclick="testRoot()">Test /</button>
+        <div id="root-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Test Logout</h2>
+        <button onclick="testLogout()">Logout</button>
+        <div id="logout-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Links</h2>
+        <button onclick="window.open('http://localhost:3000', '_blank')">Open Main App</button>
+        <button onclick="window.open('http://localhost:3000/login', '_blank')">Open Login Page</button>
+        <button onclick="window.open('http://localhost:3000/logout', '_blank')">Trigger Logout</button>
+    </div>
+
+    <script>
+        async function testLoginPage() {
+            const result = document.getElementById('login-result');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:3000/login');
+                const html = await response.text();
+
+                if (response.ok && html.includes('Notion Manager')) {
+                    result.innerHTML = `✅ SUCCESS<br>Status: ${response.status}<br>Login page loaded correctly`;
+                    result.style.background = '#d4edda';
+                } else {
+                    result.innerHTML = `❌ FAILED<br>Status: ${response.status}`;
+                    result.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ ERROR: ${error.message}`;
+                result.style.background = '#f8d7da';
+            }
+        }
+
+        async function testLoginPost() {
+            const result = document.getElementById('loginpost-result');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'password=akmal',
+                    credentials: 'include',
+                    redirect: 'manual'
+                });
+
+                if (response.type === 'opaqueredirect' || response.status === 302) {
+                    result.innerHTML = `✅ SUCCESS<br>Login successful, redirected to /`;
+                    result.style.background = '#d4edda';
+                } else {
+                    result.innerHTML = `❌ Status: ${response.status}<br>Check console for details`;
+                    result.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ ERROR: ${error.message}`;
+                result.style.background = '#f8d7da';
+            }
+        }
+
+        async function testRoot() {
+            const result = document.getElementById('root-result');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:3000/', {
+                    credentials: 'include',
+                    redirect: 'manual'
+                });
+
+                if (response.ok) {
+                    result.innerHTML = `✅ SUCCESS<br>Status: ${response.status}<br>Authenticated and can access main page`;
+                    result.style.background = '#d4edda';
+                } else if (response.type === 'opaqueredirect' || response.status === 302) {
+                    result.innerHTML = `⚠️ REDIRECT<br>Not authenticated, redirected to /login`;
+                    result.style.background = '#fff3cd';
+                } else {
+                    result.innerHTML = `❌ Status: ${response.status}`;
+                    result.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ ERROR: ${error.message}`;
+                result.style.background = '#f8d7da';
+            }
+        }
+
+        async function testLogout() {
+            const result = document.getElementById('logout-result');
+            result.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('http://localhost:3000/logout', {
+                    credentials: 'include',
+                    redirect: 'manual'
+                });
+
+                if (response.type === 'opaqueredirect' || response.status === 302) {
+                    result.innerHTML = `✅ SUCCESS<br>Logged out, redirected to /login`;
+                    result.style.background = '#d4edda';
+                } else {
+                    result.innerHTML = `❌ Status: ${response.status}`;
+                    result.style.background = '#f8d7da';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ ERROR: ${error.message}`;
+                result.style.background = '#f8d7da';
+            }
+        }
+    </script>
+</body>
+</html>

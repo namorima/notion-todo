@@ -89,3 +89,7 @@ logs
 # claude file
 .claude/
 claude.md
+
+cookies.txt
+
+null
