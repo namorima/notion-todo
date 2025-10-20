@@ -1,289 +1,400 @@
-# 📋 Notion TODO Manager (2025 Edition)
+# 📝 Notion Manager
 
-A modern, interactive command-line TODO application with advanced UI features, seamless Notion integration, and intelligent date picker functionality. Built with Node.js and enhanced with cutting-edge user interface elements.
+A modern web application and CLI tool for managing Notion TODO lists and calendar events with Malaysian public holiday integration.
 
-![Node.js](https://img.shields.io/badge/Node.js-v16+-green.svg)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)
 ![Notion API](https://img.shields.io/badge/Notion-API-blue.svg)
+![Express](https://img.shields.io/badge/Express-5.1-lightgrey.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Inquirer](https://img.shields.io/badge/Inquirer-Prompts-purple.svg)
 
 ## ✨ Features
 
-### 🎯 Core Functionality
-- **Modern Interactive Interface** - Arrow-key navigation with @inquirer/prompts
-- **Real-time Progress Indicators** - Visual feedback during API operations
-- **ESC Key Navigation** - Universal escape key support for intuitive navigation
-- **Smart Category Selection** - Interactive dropdown with emoji indicators
-- **Advanced Date Picker** - Quick date selection with smart defaults
+### 🌐 Web Interface
 
-### 🎨 Visual Elements
-- **Consistent Color Scheme** - Blue-themed interface for all prompts
-- **Animated Progress Bars** - Real-time loading indicators with dots animation
-- **Clean Headers** - Borderless design for modern appearance
-- **Status-based Icons**:
-  - ✅ **Done** - Completed tasks (green, strikethrough)
-  - ❌ **Overdue** - Past due date (red)
-  - ❓ **No Due Date** - Tasks without deadlines (yellow)
-  - ✖️ **Not Started** - Pending tasks with valid due dates (red)
-  - ➖ **In Progress** - Currently working (yellow)
+- **Password Protected** - Secure login with session management
+- **Dual View System** - Todo list and calendar in one application
+- **Malaysian Holidays** - Automatic integration of public holidays
+- **Interactive Calendar** - Visual grid with event indicators
+- **Responsive Design** - Works on desktop and mobile
+- **Grid/List View** - Toggle between card and list layouts (desktop only)
 
-### 📅 Advanced Date Picker
-- **📅 Hari ini** - Select today's date instantly
-- **🌅 Esok** - Choose tomorrow with one click
-- **📆 Minggu depan** - Next week option (7 days ahead)
-- **🗓️ Bulan depan** - Next month selection
-- **✏️ Custom Input** - Manual date entry with smart defaults
-- **🚫 No Due Date** - Option to skip due dates entirely
+### 📅 Calendar Features
 
-### 🏷️ Enhanced Category System
-- **⚡ Segera** (Urgent) - Lightning bolt indicator
-- **🔥 Penting** (Important) - Fire emoji for high priority
-- **👤 Pribadi** (Personal) - Personal tasks marker
-- **📝 Tiada kategori** - No category option
-- **Visual Display** - Categories shown with emojis in todo list
+- **Event Management** - Add, edit, delete calendar events
+- **Date Ranges** - Support for multi-day events
+- **Visual Indicators** - Blue circles for events, red borders for holidays
+- **Weekend Highlighting** - Friday and Saturday displayed in blue (30% opacity)
+- **Event Tooltips** - Hover over dates to see event names
+- **Holiday Display** - Previous month holidays shown with transparent styling
 
-### 🚀 Performance & UX
-- **Environment Variables** - Secure credential management with dotenv
-- **Progress Feedback** - Loading indicators for all API operations
-- **Error Handling** - Graceful error recovery with user-friendly messages
-- **Descriptive Code** - Meaningful variable names for maintainability
+### ✅ Todo Management
+
+- **Category System** - Organize with emojis (🔥 Penting, ⚡ Segera, 👤 Pribadi)
+- **Status Tracking** - Not Started, In Progress, Done
+- **Due Date Management** - Visual indicators for overdue tasks
+- **Filtering** - Quick filters by status (All, Completed, Overdue, Pending)
+- **Real-time Updates** - Changes reflected immediately
+
+### 🖥️ CLI Interface (Legacy)
+
+- Interactive command-line todo manager
+- Arrow-key navigation
+- Advanced date picker
+- Progress indicators
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js v16 or higher
+
+- Node.js v18 or higher
 - Notion account with API access
-- Notion database with proper schema
+- Two Notion databases (TODO and Calendar)
 
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
-   cd notion-todo-manager
+   cd notion-manager
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Setup environment variables**
+
+   Copy `.env.example` to `.env`:
+
    ```bash
    cp .env.example .env
    ```
-   
+
    Edit `.env` file with your credentials:
+
    ```env
    NOTION_API_KEY=your_notion_api_key_here
-   DATABASE_ID=your_database_id_here
+   DATABASE_ID=your_todo_database_id_here
+   CALENDAR_DATABASE_ID=your_calendar_database_id_here
+   APP_PASSWORD=akmal
+   HOLIDAY_STATE=Kelantan
    ```
 
-4. **Run the application**
+4. **Fetch holiday data (optional)**
+
    ```bash
-   node todo.js
-   # or use the batch file (Windows)
-   todo2.bat
+   node fetch-holidays.js
    ```
+
+5. **Run the application**
+
+   ```bash
+   npm start
+   ```
+
+   Open browser: `http://localhost:3000`
 
 ## ⚙️ Configuration
 
-### Notion Database Schema
-Your Notion database should have these properties:
+### Notion Database Schemas
+
+**TODO Database** requires:
+
 - `name` (Title) - Task names
 - `status` (Status) - Task status (Not started, In Progress, Done)
-- `kategori` (Select) - Categories for organization
+- `kategori` (Select) - Categories (Penting, Segera, Pribadi)
 - `due date` (Date) - Task deadlines
+
+**Calendar Database** requires:
+
+- `Name` (Title) - Event names
+- `Date` (Date) - Event date/date range
+- `Location` (Text) - Event location
+- `Tags` (Multi-select) - Event tags
+- `Selesai` (Checkbox) - Completion status
 
 ### Getting Your Credentials
 
 1. **Notion API Key**:
+
    - Go to [Notion Integrations](https://www.notion.so/my-integrations)
    - Create new integration
    - Copy the "Internal Integration Token"
+   - Share your databases with the integration
 
-2. **Database ID**:
+2. **Database IDs**:
    - Open your Notion database
    - Copy the ID from the URL: `notion.so/[workspace]/[DATABASE_ID]?v=...`
 
 ## 🎮 Usage
 
-### Modern Interactive Menu System
-The application now features arrow-key navigation with visual indicators:
+### Web Interface
 
+1. **Login**
+
+   - Navigate to `http://localhost:3000`
+   - Enter password (default: `akmal`)
+   - Session valid for 24 hours
+
+2. **Managing Todos**
+
+   - Click `+` button to add new todo
+   - Select category and set due date
+   - Mark complete with `✅ Mark Done` button
+   - Edit or delete using icons
+
+3. **Managing Calendar**
+
+   - Switch to `📅 Calendar` tab
+   - Click `+ Tambah Event` to add events
+   - Set start/end dates for multi-day events
+   - Add location and tags
+   - Mark events as done with checkbox
+
+4. **Calendar Grid**
+
+   - Click dates to filter events
+   - Hover over dates to see event tooltips
+   - Navigate months with `‹` and `›` buttons
+   - Blue circles = events
+   - Red borders = holidays
+
+5. **Logout**
+   - Click `🚪 Logout` button (top right)
+
+### CLI Interface
+
+```bash
+npm run cli
 ```
-⚙️ Select an option:
-❯ ➕ Tambah todo baru              # Add new todo with category selection
-  📅 Tambah todo dengan due date   # Add todo with advanced date picker
-  ✅ Mark todo as Done            # Interactive todo selection
-  🔄 Restart application          # Refresh data and return to page 1
-  ▶️ Next page                    # Navigate forward (when available)
-  ◀️ Previous page                # Navigate backward (when available)
-  ❌ Exit                          # Clean application termination
-```
 
-### Enhanced User Experience
-- **Arrow Key Navigation** - Use ↑↓ keys to navigate all menus
-- **ESC Key Support** - Press ESC at any prompt to return to main menu
-- **Progress Indicators** - Visual feedback during all API operations
-- **Smart Validation** - Real-time input validation with helpful error messages
+Features:
 
-### Date Selection Workflow
-When adding todos with due dates:
-1. **Quick Options**: Choose from preset dates (Today, Tomorrow, Next Week, Next Month)
-2. **Custom Input**: Select "Masukkan tarikh custom" for specific dates
-3. **Smart Defaults**: Custom input pre-filled with today's date
-4. **No Due Date**: Option to skip due dates entirely
-
-### Category Selection Process
-Interactive category dropdown with visual indicators:
-- **⚡ Segera** - For urgent tasks requiring immediate attention
-- **🔥 Penting** - For important tasks with high priority
-- **👤 Pribadi** - For personal tasks and private matters
-- **📝 Tiada kategori** - For uncategorized general tasks
-
-### Example Modern Workflow
-1. **Launch** - Run `node todo.js` to start the application
-2. **View Progress** - Watch loading indicators during data fetch
-3. **Navigate** - Use arrow keys to select menu options
-4. **Add Tasks** - Choose category from dropdown, select dates from picker
-5. **Mark Complete** - Select todos from interactive list
-6. **ESC Navigation** - Press ESC anytime to go back to main menu
+- Arrow-key navigation
+- Interactive date picker
+- Progress indicators
+- Category selection with emojis
 
 ## 📁 Project Structure
 
 ```
-📦 notion-todo-manager/
-├── 📜 todo.js           # Main application file
-├── 📜 todo2.bat         # Windows batch launcher
-├── 📜 package.json      # Node.js dependencies
-├── 📜 .env             # Environment variables (git-ignored)
-├── 📜 .env.example     # Environment template
-├── 📜 .gitignore       # Git ignore rules
-├── 📜 CLAUDE.md        # Development instructions
-└── 📜 README.md        # This documentation
+notion-manager/
+├── server.js              # Express web server
+├── index.ejs              # Main web interface
+├── login.ejs              # Login page
+├── todo.js                # CLI interface (legacy)
+├── fetch-holidays.js      # Holiday data fetcher
+├── holidays.json          # Malaysian holidays cache
+├── package.json           # Dependencies
+├── .env                   # Environment variables (git-ignored)
+├── .env.example           # Environment template
+├── DEPLOY_RENDER.md       # Deployment guide
+├── CLAUDE.md              # Development instructions
+└── README.md              # This file
 ```
 
-## 🛠️ Dependencies
+## 🛠️ Development
 
-### Modern UI Dependencies
-- **@inquirer/prompts** - Modern interactive command-line prompts with arrow-key navigation
-- **chalk** `^5.6.2` - Terminal colors and styling for beautiful output
-- **boxen** `^8.0.1` - Terminal boxes (legacy support, removed from headers)
-- **dotenv** `^17.2.2` - Secure environment variable management
+### Running Locally
 
-### Core Functionality
-- **node-fetch** `^3.0.0` - HTTP client for Notion API requests
-- **react** - Required for progress bar components (internal use)
-- **ink** - Terminal UI framework for progress indicators (internal use)
-
-### Built-in Node.js Modules
-- **process** - Environment and system process management
-- **fs** - File system operations for environment variables
-
-### Latest Package Additions (2025)
-- Replaced `readline` with `@inquirer/prompts` for modern UX
-- Added progress bar functionality with custom console implementation
-- Enhanced error handling with graceful recovery mechanisms
-
-## 🆕 What's New in 2025 Edition
-
-### Major Upgrades
-| Feature | Old Version | New Version |
-|---------|-------------|-------------|
-| **Navigation** | Text input with numbers | Arrow-key navigation |
-| **Category Selection** | Manual text input | Interactive dropdown with emojis |
-| **Date Input** | Manual YYYY-MM-DD entry | Smart date picker with presets |
-| **Progress Feedback** | No visual feedback | Animated progress bars |
-| **Color Scheme** | Mixed colors | Consistent blue theme |
-| **Headers** | Boxed borders | Clean borderless design |
-| **Error Recovery** | Basic error messages | ESC key navigation |
-
-### Technical Improvements
-- **Descriptive Variables** - All variables use meaningful names for better code readability
-- **Modern Async/Await** - Proper promise handling throughout the application
-- **Environment Security** - All credentials moved to `.env` files
-- **Progress Indicators** - Real-time feedback for all API operations
-
-## 🔧 Development
-
-### Environment Setup
 ```bash
-# Install all modern dependencies
-npm install
+# Web server (development)
+npm start
 
-# Copy environment template (if available)
-cp .env.example .env
+# CLI tool
+npm run cli
 
-# Create .env file manually if template doesn't exist
-echo "NOTION_API_KEY=your_api_key_here" > .env
-echo "DATABASE_ID=your_database_id_here" >> .env
-```
-
-### Code Architecture (2025)
-- **Modern UI Components** - `@inquirer/prompts` for all user interactions
-- **Progress Management** - Custom progress bar class with console animations
-- **Date Utilities** - Helper functions for smart date generation
-- **Error Handling** - Comprehensive try-catch blocks with graceful recovery
-- **Modular Design** - Separated concerns with descriptive function names
-
-### Development Best Practices
-- **Descriptive Naming** - All variables use clear, meaningful names
-- **Consistent Styling** - Blue color theme across all user prompts
-- **Progress Feedback** - Visual indicators for all async operations
-- **ESC Navigation** - Universal escape key support in all prompts
-
-## 🚢 Deployment
-
-### Local Development
-```bash
-node todo.js
-```
-
-### Windows Quick Launch
-```batch
-todo2.bat
+# Fetch latest holidays
+node fetch-holidays.js
 ```
 
 ### Environment Variables
-Ensure your `.env` file contains:
-```env
-NOTION_API_KEY=ntn_your_key_here
-DATABASE_ID=your_database_id_here
+
+| Variable               | Description                  | Default       |
+| ---------------------- | ---------------------------- | ------------- |
+| `PORT`                 | Server port                  | `3000`        |
+| `NOTION_API_KEY`       | Notion integration token     | Required      |
+| `DATABASE_ID`          | TODO database ID             | Required      |
+| `CALENDAR_DATABASE_ID` | Calendar database ID         | Required      |
+| `APP_PASSWORD`         | Login password               | [edit in env] |
+| `HOLIDAY_STATE`        | Malaysian state for holidays | `Kelantan`    |
+
+## 🚢 Deployment
+
+### Deploy to Render
+
+See detailed guide: [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
+
+**Quick steps:**
+
+1. Push code to GitHub
+2. Create Web Service on Render
+3. Set environment variables in Render dashboard
+4. Deploy!
+
+**Important:**
+
+- `PORT` uses `process.env.PORT` (already configured)
+- Start command: `npm start` (already configured)
+- All environment variables must be set in Render
+- Free tier: server sleeps after 15min idle
+
+### Key Deployment Settings
+
 ```
+Build Command: npm install
+Start Command: npm start
+Node Version: >=18.0.0
+```
+
+## 🎨 Customization
+
+### Changing Password
+
+Edit `.env`:
+
+```env
+APP_PASSWORD=your_new_password
+```
+
+### Changing Holiday State
+
+Supported Malaysian states:
+
+- Johor, Kedah, Kelantan, Melaka, Negeri Sembilan
+- Pahang, Penang, Perak, Perlis, Sabah, Sarawak
+- Selangor, Terengganu, W.P. Kuala Lumpur, W.P. Labuan, W.P. Putrajaya
+
+Edit `.env`:
+
+```env
+HOLIDAY_STATE=Selangor
+```
+
+Then run:
+
+```bash
+node fetch-holidays.js
+```
+
+### Modifying Calendar Colors
+
+Edit `index.ejs`:
+
+- Event circles: `.calendar-day.has-event` (line 957-965)
+- Holiday borders: `.calendar-day.is-holiday` (line 968-976)
+- Weekend colors: `.calendar-day.weekend` (line 947-949)
+
+## 🔧 Troubleshooting
+
+### Login Page Not Showing
+
+**Solution:**
+
+1. Clear browser cookies/cache
+2. Try incognito mode
+3. Check server logs for errors
+4. Verify `login.ejs` exists in root directory
+
+### Holidays Not Displaying
+
+**Solution:**
+
+```bash
+# Regenerate holidays.json
+node fetch-holidays.js
+
+# Check holidays.json year matches current year
+cat holidays.json
+```
+
+### Calendar Events Not Loading
+
+**Solution:**
+
+1. Verify `CALENDAR_DATABASE_ID` is correct
+2. Check Notion database has required properties:
+   - Name (Title)
+   - Date (Date)
+   - Location (Text)
+   - Tags (Multi-select)
+   - Selesai (Checkbox)
+3. Ensure integration has access to calendar database
+
+### Session Not Persisting
+
+**Issue:** Free tier Render restarts after 15min idle
+
+**Solution:**
+
+- Sessions stored in memory (reset on restart)
+- For production: use external session store (Redis)
+- Or upgrade to paid tier for always-on service
+
+## 📚 API Documentation
+
+### Authentication Endpoints
+
+- `GET /login` - Login page
+- `POST /login` - Authenticate user
+- `GET /logout` - Destroy session and redirect
+
+### Todo Endpoints
+
+- `GET /` - Main page (requires auth)
+- `POST /add` - Add new todo
+- `POST /edit` - Edit existing todo
+- `POST /done/:id` - Mark todo as done
+- `POST /delete/:id` - Delete todo
+
+### Calendar Endpoints
+
+- `POST /calendar/add` - Add calendar event
+- `POST /calendar/edit` - Edit calendar event
+- `POST /calendar/done/:id` - Mark event as done
+- `POST /calendar/delete/:id` - Delete calendar event
 
 ## 🛡️ Security
 
-- **Environment Variables** - Sensitive data stored in `.env` (git-ignored)
-- **Input Validation** - All user inputs are validated
-- **API Error Handling** - Graceful handling of API failures
-- **Safe Deployment** - Credentials never committed to repository
+- **Session-based authentication** - Password protected access
+- **Environment variables** - Credentials in `.env` (git-ignored)
+- **Input validation** - All user inputs validated
+- **API error handling** - Graceful error recovery
+- **HTTPS ready** - Works with Render's automatic HTTPS
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open Pull Request
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ## 🙏 Acknowledgments
 
-- [Notion API](https://developers.notion.com/) for excellent documentation
-- [Chalk](https://github.com/chalk/chalk) for beautiful terminal colors
-- [Boxen](https://github.com/sindresorhus/boxen) for terminal box styling
+- [Notion API](https://developers.notion.com/) - Excellent API documentation
+- [Express.js](https://expressjs.com/) - Fast web framework
+- [EJS](https://ejs.co/) - Embedded JavaScript templating
+- [Office Holidays](http://www.officeholidays.com/) - Malaysian holiday data
 
 ## 📞 Support
 
-If you encounter any issues or have questions:
-1. Check the [Issues](../../issues) page
-2. Create a new issue with detailed description
-3. Include your environment details and error messages
+If you encounter issues:
+
+1. Check [Issues](../../issues) page
+2. Review [CLAUDE.md](CLAUDE.md) for development guidance
+3. Read [DEPLOY_RENDER.md](DEPLOY_RENDER.md) for deployment help
+4. Create new issue with details
 
 ---
 
 **Made with ❤️ for productivity enthusiasts**
+
+**Version:** 1.0.0 (Web + CLI Edition)
