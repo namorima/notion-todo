@@ -1,11 +1,26 @@
 import fetch from "node-fetch";
-import { select, input, confirm } from "@inquirer/prompts";
+import { select, input, confirm, checkbox } from "@inquirer/prompts";
 import chalk from "chalk";
 import boxen from "boxen";
 import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
+
+// Handle process signals for graceful exit
+process.on('SIGINT', () => {
+  console.log(chalk.yellow("\n\n👋 Goodbye!"));
+  process.exit(0);
+});
+
+// Helper function to check if error is due to ESC key press
+function isEscapeKeyPressed(error) {
+  return error.name === 'ExitPromptError' ||
+         error.message === 'User force closed the prompt with 0 null' ||
+         error.message.includes('force closed') ||
+         error.message.includes('canceled') ||
+         error.code === 'ESCAPE';
+}
 
 // ==== SETTING ====
 const notion_api_key = process.env.NOTION_API_KEY;
@@ -274,6 +289,88 @@ async function updateTodoStatus(pageId, status) {
   }
 }
 
+// Fungsi untuk bulk update multiple todos status
+async function bulkUpdateTodoStatus(pageIds, status) {
+  const progress = showProgress(`Mengemas kini ${pageIds.length} todos secara bulk`);
+  const results = [];
+
+  const headers = {
+    "Authorization": `Bearer ${notion_api_key}`,
+    "Notion-Version": "2022-06-28",
+    "Content-Type": "application/json"
+  };
+
+  const body = {
+    properties: {
+      status: {
+        status: { name: status }
+      }
+    }
+  };
+
+  let successCount = 0;
+  let failCount = 0;
+
+  try {
+    for (let i = 0; i < pageIds.length; i++) {
+      const pageId = pageIds[i];
+      progress.update(`Mengemas kini todo ${i + 1} dari ${pageIds.length}`);
+
+      const url = `https://api.notion.com/v1/pages/${pageId}`;
+
+      try {
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+          successCount++;
+          results.push({ pageId, success: true });
+        } else {
+          const error = await res.json();
+          failCount++;
+          results.push({ pageId, success: false, error: error.message });
+        }
+      } catch (err) {
+        failCount++;
+        results.push({ pageId, success: false, error: err.message });
+      }
+
+      // Small delay to avoid rate limiting
+      if (i < pageIds.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+
+    progress.stop();
+
+    if (failCount === 0) {
+      return {
+        success: true,
+        message: `✅ Semua ${successCount} todos berjaya dikemas kini ke "${status}"!`,
+        results
+      };
+    } else if (successCount > 0) {
+      return {
+        success: true,
+        message: `⚠️ ${successCount} todos berjaya, ${failCount} gagal dikemas kini`,
+        results
+      };
+    } else {
+      return {
+        success: false,
+        message: `❌ Semua ${failCount} todos gagal dikemas kini`,
+        results
+      };
+    }
+  } catch (err) {
+    progress.stop();
+    return { success: false, message: `❌ Error: ${err.message}`, results };
+  }
+}
+
 // Fungsi untuk check reminder (due date hari ini atau overdue)
 function checkReminders(data) {
   const today = new Date().toISOString().split('T')[0];
@@ -441,6 +538,7 @@ async function showOptions() {
     { name: "➕ Tambah todo baru", value: "add" },
     { name: "📅 Tambah todo dengan due date", value: "addWithDate" },
     { name: "✅ Mark todo as Done", value: "markDone" },
+    { name: "☑️  Bulk mark as Done", value: "bulkMarkDone" },
     { name: "🔄 Restart application", value: "restart" }
   ];
 
@@ -471,6 +569,9 @@ async function showOptions() {
         break;
       case "markDone":
         await handleMarkDone();
+        break;
+      case "bulkMarkDone":
+        await handleBulkMarkDone();
         break;
       case "restart":
         console.log(chalk.yellow("🔄 Restarting application..."));
@@ -508,10 +609,11 @@ async function showOptions() {
     }
   } catch (error) {
     if (error.name === 'ExitPromptError') {
-      process.exit(0);
+      await showOptions();
+    } else {
+      console.log(chalk.red("❌ Error occurred:", error.message));
+      await showOptions();
     }
-    console.log(chalk.red("❌ Error occurred:", error.message));
-    await showOptions();
   }
 }
 
@@ -572,7 +674,119 @@ async function handleMarkDone() {
 
     await showOptions();
   } catch (error) {
-    if (error.name === 'ExitPromptError') {
+    if (isEscapeKeyPressed(error)) {
+      console.log(chalk.yellow("\n🔙 Kembali ke menu utama..."));
+      await showOptions();
+    } else {
+      console.log(chalk.red("❌ Error:", error.message));
+      await showOptions();
+    }
+  }
+}
+
+// Function untuk handle bulk mark todos as done
+async function handleBulkMarkDone() {
+  console.log(chalk.bold.yellow("\n☑️  BULK MARK TODOS AS DONE"));
+  console.log(chalk.gray("(Use SPACE to select, ENTER to confirm, ESC to return to main menu)\n"));
+
+  if (allTodos.length === 0) {
+    console.log(chalk.red("❌ Tiada todos untuk di-mark!"));
+    await showOptions();
+    return;
+  }
+
+  // Filter only non-completed todos for selection
+  const incompleteTodos = allTodos.filter(todo => {
+    const status = todo.properties["status"]?.status?.name || "Unknown";
+    return status !== "Done";
+  });
+
+  if (incompleteTodos.length === 0) {
+    console.log(chalk.yellow("✅ Semua todos sudah selesai!"));
+    await showOptions();
+    return;
+  }
+
+  // Create checkbox choices from incomplete todos
+  const choices = incompleteTodos.map((todo, index) => {
+    const name = todo.properties["name"]?.title?.[0]?.plain_text || "Untitled";
+    const kategori = todo.properties["kategori"]?.select?.name || "";
+    const dueDate = todo.properties["due date"]?.date?.start;
+
+    let kategoriText = "";
+    if (kategori) {
+      if (kategori === "Penting") {
+        kategoriText = ` 🔥[${kategori}]`;
+      } else if (kategori === "Segera") {
+        kategoriText = ` ⚡[${kategori}]`;
+      } else if (kategori === "Pribadi") {
+        kategoriText = ` 👤[${kategori}]`;
+      } else {
+        kategoriText = ` [${kategori}]`;
+      }
+    }
+
+    // Add due date info if exists
+    let dueDateText = "";
+    if (dueDate) {
+      const today = new Date().toISOString().split('T')[0];
+      const due = new Date(dueDate);
+      const todayDate = new Date(today);
+
+      if (due < todayDate) {
+        dueDateText = chalk.red(` (Overdue: ${dueDate})`);
+      } else if (due.getTime() === todayDate.getTime()) {
+        dueDateText = chalk.yellow(` (Due today)`);
+      } else {
+        dueDateText = chalk.cyan(` (Due: ${dueDate})`);
+      }
+    }
+
+    return {
+      name: `⏳ ${name}${kategoriText}${dueDateText}`,
+      value: todo.id
+    };
+  });
+
+  try {
+    const selectedTodoIds = await checkbox({
+      message: chalk.blue("🎯 Select todos to mark as done (Space to select, Enter to confirm):"),
+      choices: choices,
+      pageSize: 15
+    });
+
+    if (selectedTodoIds.length === 0) {
+      console.log(chalk.yellow("❌ Tiada todos dipilih!"));
+      await showOptions();
+      return;
+    }
+
+    // Confirmation
+    const confirmResult = await confirm({
+      message: chalk.red(`⚠️  Confirm mark ${selectedTodoIds.length} todos as Done?`),
+      default: false
+    });
+
+    if (!confirmResult) {
+      console.log(chalk.yellow("❌ Operasi dibatalkan"));
+      await showOptions();
+      return;
+    }
+
+    const result = await bulkUpdateTodoStatus(selectedTodoIds, "Done");
+
+    if (result.success) {
+      await loadTodos();
+      displayTodos();
+      console.log(chalk.green(result.message));
+    } else {
+      console.log(chalk.red(result.message));
+    }
+
+    await showOptions();
+  } catch (error) {
+    if (isEscapeKeyPressed(error)) {
+      console.log(chalk.yellow("\n🔙 Kembali ke menu utama..."));
       await showOptions();
     } else {
       console.log(chalk.red("❌ Error:", error.message));
@@ -612,7 +826,8 @@ async function handleAddTodo() {
     displayTodos();
     await showOptions();
   } catch (error) {
-    if (error.name === 'ExitPromptError') {
+    if (isEscapeKeyPressed(error)) {
+      console.log(chalk.yellow("\n🔙 Kembali ke menu utama..."));
       await showOptions();
     } else {
       console.log(chalk.red("❌ Error:", error.message));
@@ -689,7 +904,8 @@ async function handleAddTodoWithDueDate() {
     displayTodos();
     await showOptions();
   } catch (error) {
-    if (error.name === 'ExitPromptError') {
+    if (isEscapeKeyPressed(error)) {
+      console.log(chalk.yellow("\n🔙 Kembali ke menu utama..."));
       await showOptions();
     } else {
       console.log(chalk.red("❌ Error:", error.message));
