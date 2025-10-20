@@ -3,6 +3,7 @@ import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ const PORT = 3000;
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const DATABASE_ID = process.env.DATABASE_ID;
 const CALENDAR_DATABASE_ID = process.env.CALENDAR_DATABASE_ID;
+const HOLIDAY_STATE = process.env.HOLIDAY_STATE || 'Kelantan';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -171,7 +173,29 @@ app.get('/', async (req, res) => {
       // Calendar will remain empty array
     }
 
-    res.render('index', { todos, calendar });
+    // Load Malaysia Holidays from JSON file
+    let holidays = [];
+    try {
+      const currentYear = new Date().getFullYear();
+      const holidaysFile = path.join(__dirname, 'holidays.json');
+
+      if (fs.existsSync(holidaysFile)) {
+        const holidayFileContent = fs.readFileSync(holidaysFile, 'utf-8');
+        const holidayData = JSON.parse(holidayFileContent);
+
+        // Check if the year matches current year
+        if (holidayData.year === currentYear) {
+          holidays = holidayData.holidays;
+          console.log(`✅ Loaded ${holidays.length} holidays for ${holidayData.state} ${currentYear}`);
+        } else {
+          console.log(`⚠️ Holiday data is for ${holidayData.year}, but current year is ${currentYear}`);
+        }
+      }
+    } catch (holidayError) {
+      console.error('Error loading holidays:', holidayError);
+    }
+
+    res.render('index', { todos, calendar, holidays });
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).send('Error fetching data');
@@ -327,14 +351,14 @@ app.post('/delete/:id', async (req, res) => {
 // Add new calendar event
 app.post('/calendar/add', async (req, res) => {
   try {
-    const { name, date, location, tags } = req.body;
+    const { name, dateStart, dateEnd, location, tags } = req.body;
 
     const properties = {
       Name: {
         title: [{ text: { content: name } }]
       },
       Date: {
-        date: { start: date }
+        date: dateEnd ? { start: dateStart, end: dateEnd } : { start: dateStart }
       }
     };
 
@@ -373,6 +397,60 @@ app.post('/calendar/add', async (req, res) => {
   }
 });
 
+// Edit calendar event
+app.post('/calendar/edit', async (req, res) => {
+  try {
+    const { id, name, dateStart, dateEnd, location, tags } = req.body;
+
+    const properties = {
+      Name: {
+        title: [{ text: { content: name } }]
+      },
+      Date: {
+        date: dateEnd ? { start: dateStart, end: dateEnd } : { start: dateStart }
+      }
+    };
+
+    if (location) {
+      properties.Location = {
+        rich_text: [{ text: { content: location } }]
+      };
+    } else {
+      properties.Location = {
+        rich_text: []
+      };
+    }
+
+    if (tags) {
+      const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag);
+      if (tagArray.length > 0) {
+        properties.Tags = {
+          multi_select: tagArray.map(tag => ({ name: tag }))
+        };
+      }
+    } else {
+      properties.Tags = {
+        multi_select: []
+      };
+    }
+
+    await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${NOTION_API_KEY}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ properties })
+    });
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error editing calendar event:', error);
+    res.status(500).send('Error editing calendar event');
+  }
+});
+
 // Mark calendar event as done
 app.post('/calendar/done/:id', async (req, res) => {
   try {
@@ -398,6 +476,30 @@ app.post('/calendar/done/:id', async (req, res) => {
   } catch (error) {
     console.error('Error marking calendar event as done:', error);
     res.status(500).send('Error updating calendar event');
+  }
+});
+
+// Delete calendar event
+app.post('/calendar/delete/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await fetch(`https://api.notion.com/v1/pages/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${NOTION_API_KEY}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        archived: true
+      })
+    });
+
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error deleting calendar event:', error);
+    res.status(500).send('Error deleting calendar event');
   }
 });
 
