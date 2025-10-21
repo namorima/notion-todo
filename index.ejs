@@ -755,6 +755,11 @@
         align-items: flex-start;
         gap: 20px;
         margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+
+      .calendar-date-actions-row {
+        display: contents;
       }
 
       .calendar-title {
@@ -939,6 +944,26 @@
         background: #f0f0f0;
       }
 
+      .clear-filter-btn {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 15px;
+        transition: all 0.3s;
+        display: none;
+      }
+
+      .clear-filter-btn:hover {
+        background: #ff5252;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+      }
+
       .calendar-grid {
         display: grid;
         grid-template-columns: repeat(7, 1fr);
@@ -983,7 +1008,7 @@
       }
 
       .calendar-day.today {
-        background: #667eea;
+        background: #10b981;
         color: white;
         font-weight: 600;
       }
@@ -1031,6 +1056,7 @@
         .calendar-grid-container {
           position: static;
           order: -1;
+          margin-bottom: 20px;
         }
       }
 
@@ -1046,6 +1072,161 @@
         .calendar-day-header {
           font-size: 0.75rem;
           padding: 8px 3px;
+        }
+
+        /* Mobile Card Layout for Calendar Events */
+        .calendar-item {
+          padding: 15px;
+          border-radius: 10px;
+          margin-bottom: 12px;
+          box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .calendar-item:active {
+          transform: scale(0.98);
+        }
+
+        .calendar-header {
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .calendar-date-actions-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          justify-content: space-between;
+        }
+
+        .calendar-title {
+          font-size: 1.05rem;
+          line-height: 1.4;
+          width: 100%;
+        }
+
+        .calendar-date {
+          align-items: flex-start;
+          font-size: 0.85rem;
+          width: auto;
+          flex-direction: row;
+          flex: 1;
+        }
+
+        .date-line {
+          font-size: 0.85rem;
+        }
+
+        .date-end {
+          padding-left: 0;
+          padding-top: 4px;
+        }
+
+        .day-count {
+          margin-left: 6px;
+          padding: 2px 6px;
+          font-size: 0.7rem;
+        }
+
+        .calendar-details {
+          flex-direction: column;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
+        .calendar-location {
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .tag-badge {
+          font-size: 0.75rem;
+          padding: 3px 8px;
+        }
+
+        .calendar-actions-right {
+          gap: 6px;
+          margin-top: 0;
+          width: auto;
+          justify-content: flex-end;
+          flex-shrink: 0;
+        }
+
+        .calendar-actions-right .icon-btn {
+          padding: 6px;
+          width: 32px;
+          height: 32px;
+        }
+
+        .calendar-actions-right .icon-btn i {
+          width: 16px;
+          height: 16px;
+        }
+
+        .clear-filter-btn {
+          font-size: 0.85rem;
+          padding: 10px 14px;
+          margin-bottom: 10px;
+        }
+
+        /* Calendar Events List Mobile */
+        .calendar-events-list {
+          max-height: none;
+          padding-right: 0;
+          margin-bottom: 20px;
+        }
+
+        .calendar-events-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+        }
+
+        .calendar-events-header h2 {
+          font-size: 1.3rem;
+        }
+
+        .btn-add-event {
+          position: fixed;
+          bottom: 80px;
+          right: 20px;
+          width: 56px;
+          height: 56px;
+          padding: 0;
+          border-radius: 50%;
+          font-size: 1.5rem;
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          z-index: 999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .btn-add-event:hover {
+          transform: scale(1.1);
+        }
+
+        .btn-add-event-text {
+          display: none;
+        }
+
+        .btn-add-event-icon {
+          display: inline;
+        }
+
+        /* Logout button - icon only on mobile */
+        .logout-btn {
+          padding: 8px 12px;
+          font-size: 1.2rem;
+        }
+
+        .logout-btn-text {
+          display: none;
         }
       }
 
@@ -1095,7 +1276,10 @@
             ☰
           </button>
         </div>
-        <a href="/logout" class="logout-btn" title="Logout">🚪 Logout</a>
+        <a href="/logout" class="logout-btn" title="Logout">
+          <i data-lucide="log-out"></i>
+          <span class="logout-btn-text"> Logout</span>
+        </a>
         <h1>📝 Notion Manager</h1>
         <p>Manage your tasks and events with style</p>
       </div>
@@ -1380,7 +1564,10 @@
           <div class="calendar-events-list" id="calendarEventsList">
             <div class="calendar-events-header">
               <h3>Events</h3>
-              <button class="btn-add-event" onclick="openCalendarModal()">+ Tambah Event</button>
+              <button class="btn-add-event" onclick="openCalendarModal()">
+                <span class="btn-add-event-icon">+</span>
+                <span class="btn-add-event-text">Tambah Event</span>
+              </button>
             </div>
             <% if (calendar.length === 0) { %>
             <div class="empty-state">
@@ -1398,25 +1585,26 @@
               <div class="calendar-content">
                 <div class="calendar-header">
                   <div class="calendar-title"><%= event.name %></div>
-                  <div class="calendar-date">
-                    <div class="date-line">
-                      <i data-lucide="calendar" class="icon-xs"></i>
-                      <span
-                        ><%= new Date(event.dateStart).toLocaleDateString('ms-MY', { day: '2-digit',
-                        month: 'short', year: 'numeric' }) %></span
-                      >
+                  <div class="calendar-date-actions-row">
+                    <div class="calendar-date">
+                      <div class="date-line">
+                        <i data-lucide="calendar" class="icon-xs"></i>
+                        <span
+                          ><%= new Date(event.dateStart).toLocaleDateString('ms-MY', { day: '2-digit',
+                          month: 'short', year: 'numeric' }) %></span
+                        >
+                        <% if (event.dateEnd) { %>
+                        <i data-lucide="arrow-right" class="icon-xs"></i>
+                        <% } %>
+                      </div>
                       <% if (event.dateEnd) { %>
-                      <i data-lucide="arrow-right" class="icon-xs"></i>
+                      <div class="date-line date-end">
+                        <%= new Date(event.dateEnd).toLocaleDateString('ms-MY', { day: '2-digit',
+                        month: 'short', year: 'numeric' }) %>
+                      </div>
                       <% } %>
                     </div>
-                    <% if (event.dateEnd) { %>
-                    <div class="date-line date-end">
-                      <%= new Date(event.dateEnd).toLocaleDateString('ms-MY', { day: '2-digit',
-                      month: 'short', year: 'numeric' }) %>
-                    </div>
-                    <% } %>
-                  </div>
-                  <div class="calendar-actions-right">
+                    <div class="calendar-actions-right">
                     <% if (!event.selesai) { %>
                     <form
                       action="/calendar/done/<%= event.id %>"
@@ -1453,6 +1641,7 @@
                         <i data-lucide="trash-2" class="icon-sm"></i>
                       </button>
                     </form>
+                    </div>
                   </div>
                 </div>
 
@@ -1485,15 +1674,18 @@
               <div class="calendar-month-year" id="calendarMonthYear"></div>
               <button class="calendar-nav-btn" onclick="nextMonth()">›</button>
             </div>
+            <button class="clear-filter-btn" id="clearFilterBtn" onclick="clearFilter()" style="display: none;">
+              ✕ Clear Filter
+            </button>
 
             <div class="calendar-grid" id="calendarGrid">
-              <div class="calendar-day-header">Ahad</div>
-              <div class="calendar-day-header">Isnin</div>
-              <div class="calendar-day-header">Selasa</div>
-              <div class="calendar-day-header">Rabu</div>
-              <div class="calendar-day-header">Khamis</div>
-              <div class="calendar-day-header weekend">Jumaat</div>
-              <div class="calendar-day-header weekend">Sabtu</div>
+              <div class="calendar-day-header">Ahd</div>
+              <div class="calendar-day-header">Isn</div>
+              <div class="calendar-day-header">Sel</div>
+              <div class="calendar-day-header">Rab</div>
+              <div class="calendar-day-header">Kha</div>
+              <div class="calendar-day-header weekend">Jum</div>
+              <div class="calendar-day-header weekend">Sab</div>
             </div>
           </div>
         </div>
@@ -1818,16 +2010,60 @@
       }
 
       function selectDate(dateStr) {
-        // Filter events by selected date
+        // Filter events by selected date (including multi-day events)
         const eventItems = document.querySelectorAll('.calendar-item');
+        const selectedDate = new Date(dateStr);
+        let hasVisibleEvents = false;
+
         eventItems.forEach(item => {
-          if (item.dataset.date === dateStr) {
+          const startDate = new Date(item.dataset.date);
+          const endDateStr = item.dataset.dateEnd;
+
+          let shouldShow = false;
+
+          if (endDateStr && endDateStr !== '') {
+            // Multi-day event: check if selected date is within range
+            const endDate = new Date(endDateStr);
+            shouldShow = selectedDate >= startDate && selectedDate <= endDate;
+          } else {
+            // Single day event: exact match
+            shouldShow = item.dataset.date === dateStr;
+          }
+
+          if (shouldShow) {
             item.style.display = 'block';
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!hasVisibleEvents) {
+              item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              hasVisibleEvents = true;
+            }
           } else {
             item.style.display = 'none';
           }
         });
+
+        // Show clear filter button
+        showClearFilterButton();
+      }
+
+      function showClearFilterButton() {
+        const clearBtn = document.getElementById('clearFilterBtn');
+        if (clearBtn) {
+          clearBtn.style.display = 'block';
+        }
+      }
+
+      function clearFilter() {
+        // Show all events
+        const eventItems = document.querySelectorAll('.calendar-item');
+        eventItems.forEach(item => {
+          item.style.display = 'block';
+        });
+
+        // Hide clear filter button
+        const clearBtn = document.getElementById('clearFilterBtn');
+        if (clearBtn) {
+          clearBtn.style.display = 'none';
+        }
       }
 
       function filterEventsByMonth() {
