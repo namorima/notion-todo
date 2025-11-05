@@ -40,38 +40,38 @@
 
     <!-- Todos Tab Content -->
     <div class="tab-content active" id="todosContent">
-      <!-- Statistics Cards -->
+      <!-- Statistics Cards (Clickable) -->
       <div class="stats" id="statsContainer">
-        <div class="stat-card">
+        <div class="stat-card clickable" data-filter="all">
           <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <i data-lucide="list-checks"></i>
+            <i data-lucide="list-todo"></i>
           </div>
           <div class="stat-info">
             <div class="stat-value" id="totalTodos">0</div>
             <div class="stat-label">Total Tasks</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable" data-filter="pending">
           <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-            <i data-lucide="clock"></i>
+            <i data-lucide="clock-4"></i>
           </div>
           <div class="stat-info">
             <div class="stat-value" id="pendingTodos">0</div>
             <div class="stat-label">Pending</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable" data-filter="in-progress">
           <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-            <i data-lucide="loader"></i>
+            <i data-lucide="play-circle"></i>
           </div>
           <div class="stat-info">
             <div class="stat-value" id="inProgressTodos">0</div>
             <div class="stat-label">In Progress</div>
           </div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card clickable" data-filter="completed">
           <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-            <i data-lucide="check-circle"></i>
+            <i data-lucide="circle-check"></i>
           </div>
           <div class="stat-info">
             <div class="stat-value" id="completedTodos">0</div>
@@ -119,11 +119,11 @@
         <div class="calendar-events-section">
           <div class="calendar-events-header">
             <h2>
-              <i data-lucide="calendar-days"></i>
-              Upcoming Events
+              <i data-lucide="list"></i>
+              All Events
             </h2>
             <button class="add-event-btn" id="addEventBtn">
-              <i data-lucide="plus"></i>
+              <i data-lucide="plus-circle"></i>
               <span>Add Event</span>
             </button>
           </div>

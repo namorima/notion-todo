@@ -543,9 +543,18 @@ body {
   border: 3px solid transparent;
 }
 
+.stat-card.clickable {
+  cursor: pointer;
+}
+
 .stat-card:hover {
   transform: translateY(-5px);
   box-shadow: var(--shadow-md);
+}
+
+.stat-card.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .stat-card.active {

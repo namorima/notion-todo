@@ -193,6 +193,9 @@ class NotionManager {
       case 'pending':
         filtered = filtered.filter(t => t.status === 'Not started');
         break;
+      case 'in-progress':
+        filtered = filtered.filter(t => t.status === 'In progress');
+        break;
     }
 
     return filtered;
@@ -336,10 +339,11 @@ class NotionManager {
   renderCalendarEvents() {
     const container = document.getElementById('calendarEventsList');
 
-    // Filter events - show upcoming and selected date
+    // Filter events - show all events or selected date
     let events = [...this.calendar];
 
     if (this.selectedDate) {
+      // Show events for selected date
       events = events.filter(event => {
         if (!event.date) return false;
         if (event.date.start === this.selectedDate) return true;
@@ -352,30 +356,37 @@ class NotionManager {
         return false;
       });
     } else {
-      // Show upcoming events (next 30 days)
-      const now = new Date();
-      const thirtyDaysLater = new Date();
-      thirtyDaysLater.setDate(now.getDate() + 30);
-
-      events = events.filter(event => {
-        if (!event.date) return false;
-        const eventDate = new Date(event.date.start);
-        return eventDate >= now && eventDate <= thirtyDaysLater;
-      });
+      // Show ALL events (upcoming, done, and past)
+      // Just filter out events without dates
+      events = events.filter(event => event.date && event.date.start);
     }
 
-    // Sort by date
+    // Sort by date (most recent first, then upcoming)
+    const now = new Date();
     events.sort((a, b) => {
       const dateA = new Date(a.date?.start || 0);
       const dateB = new Date(b.date?.start || 0);
-      return dateA - dateB;
+
+      // Prioritize upcoming events, then past events
+      const aIsUpcoming = dateA >= now;
+      const bIsUpcoming = dateB >= now;
+
+      if (aIsUpcoming && !bIsUpcoming) return -1;
+      if (!aIsUpcoming && bIsUpcoming) return 1;
+
+      // Within same category (both upcoming or both past), sort by date
+      if (aIsUpcoming && bIsUpcoming) {
+        return dateA - dateB; // Upcoming: earliest first
+      } else {
+        return dateB - dateA; // Past: most recent first
+      }
     });
 
     if (events.length === 0) {
       container.innerHTML = `
         <div class="empty-state">
           <i data-lucide="calendar-x"></i>
-          <p>No upcoming events</p>
+          <p>No events</p>
         </div>
       `;
       if (window.lucide) lucide.createIcons();
@@ -457,6 +468,14 @@ class NotionManager {
     // Add event button (calendar tab)
     document.getElementById('addEventBtn').addEventListener('click', () => {
       this.openModal('addCalendarModal');
+    });
+
+    // Stat cards (clickable filters)
+    document.querySelectorAll('.stat-card.clickable').forEach(card => {
+      card.addEventListener('click', (e) => {
+        const filter = e.currentTarget.dataset.filter;
+        this.setFilter(filter);
+      });
     });
 
     // Filter buttons
@@ -577,6 +596,11 @@ class NotionManager {
     // Update filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+
+    // Update stat cards
+    document.querySelectorAll('.stat-card.clickable').forEach(card => {
+      card.classList.toggle('active', card.dataset.filter === filter);
     });
 
     this.renderTodos();
