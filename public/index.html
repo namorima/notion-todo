@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Manager - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="calendar.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <button class="logout-btn" id="logoutBtn">
+        <i data-lucide="log-out"></i>
+        <span class="logout-btn-text">Logout</span>
+      </button>
+      <h1>📝 Notion Manager</h1>
+      <p>Manage your tasks and events with style</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button class="tab-btn active" data-tab="todos">
+        <i data-lucide="check-square"></i>
+        <span>Todos</span>
+      </button>
+      <button class="tab-btn" data-tab="calendar">
+        <i data-lucide="calendar"></i>
+        <span>Calendar</span>
+      </button>
+    </div>
+
+    <!-- FAB Button -->
+    <button class="fab-button" id="fabButton">
+      <i data-lucide="plus"></i>
+    </button>
+
+    <!-- Todos Tab Content -->
+    <div class="tab-content active" id="todosContent">
+      <!-- Statistics Cards -->
+      <div class="stats" id="statsContainer">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <i data-lucide="list-checks"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="totalTodos">0</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <i data-lucide="clock"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="pendingTodos">0</div>
+            <div class="stat-label">Pending</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <i data-lucide="loader"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="inProgressTodos">0</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <i data-lucide="check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <div class="stat-value" id="completedTodos">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="filter-buttons" id="filterButtons">
+        <button class="filter-btn active" data-filter="all">
+          <i data-lucide="list"></i> All
+        </button>
+        <button class="filter-btn" data-filter="completed">
+          <i data-lucide="check"></i> Completed
+        </button>
+        <button class="filter-btn" data-filter="overdue">
+          <i data-lucide="alert-circle"></i> Overdue
+        </button>
+        <button class="filter-btn" data-filter="pending">
+          <i data-lucide="clock"></i> Pending
+        </button>
+      </div>
+
+      <!-- View Toggle (Desktop only) -->
+      <div class="view-toggle" id="viewToggle">
+        <button class="view-btn active" data-view="grid">
+          <i data-lucide="grid-3x3"></i>
+        </button>
+        <button class="view-btn" data-view="list">
+          <i data-lucide="list"></i>
+        </button>
+      </div>
+
+      <!-- Todos Grid -->
+      <div class="todos-grid" id="todosGrid">
+        <!-- Todos will be dynamically inserted here -->
+      </div>
+    </div>
+
+    <!-- Calendar Tab Content -->
+    <div class="tab-content" id="calendarContent">
+      <div class="calendar-layout">
+        <!-- Calendar Events List -->
+        <div class="calendar-events-section">
+          <div class="calendar-events-header">
+            <h2>
+              <i data-lucide="calendar-days"></i>
+              Upcoming Events
+            </h2>
+            <button class="add-event-btn" id="addEventBtn">
+              <i data-lucide="plus"></i>
+              <span>Add Event</span>
+            </button>
+          </div>
+          <div class="calendar-events-list" id="calendarEventsList">
+            <!-- Events will be dynamically inserted here -->
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="calendar-grid-container">
+          <div class="calendar-header">
+            <button class="calendar-nav-btn" id="prevMonthBtn">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            <h2 id="currentMonthYear">Loading...</h2>
+            <button class="calendar-nav-btn" id="nextMonthBtn">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Calendar will be dynamically inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Todo Modal -->
+  <div class="modal" id="addTodoModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i data-lucide="plus-circle"></i>
+          Add New Todo
+        </h2>
+        <button class="modal-close" data-modal="addTodoModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="addTodoForm">
+        <div class="form-group">
+          <label for="todoName">Task Name</label>
+          <input type="text" id="todoName" name="name" required placeholder="Enter task name...">
+        </div>
+        <div class="form-group">
+          <label for="todoCategory">Category</label>
+          <select id="todoCategory" name="kategori" required>
+            <option value="">-- Select Category --</option>
+            <option value="Penting">🔥 Penting (Important)</option>
+            <option value="Segera">⚡ Segera (Urgent)</option>
+            <option value="Pribadi">👤 Pribadi (Personal)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="todoDueDate">Due Date</label>
+          <input type="date" id="todoDueDate" name="dueDate" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" data-modal="addTodoModal">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i data-lucide="check"></i>
+            Add Todo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Todo Modal -->
+  <div class="modal" id="editTodoModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i data-lucide="edit"></i>
+          Edit Todo
+        </h2>
+        <button class="modal-close" data-modal="editTodoModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="editTodoForm">
+        <input type="hidden" id="editTodoId" name="id">
+        <div class="form-group">
+          <label for="editTodoName">Task Name</label>
+          <input type="text" id="editTodoName" name="name" required placeholder="Enter task name...">
+        </div>
+        <div class="form-group">
+          <label for="editTodoCategory">Category</label>
+          <select id="editTodoCategory" name="kategori" required>
+            <option value="">-- Select Category --</option>
+            <option value="Penting">🔥 Penting (Important)</option>
+            <option value="Segera">⚡ Segera (Urgent)</option>
+            <option value="Pribadi">👤 Pribadi (Personal)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editTodoDueDate">Due Date</label>
+          <input type="date" id="editTodoDueDate" name="dueDate" required>
+        </div>
+        <div class="form-group">
+          <label for="editTodoStatus">Status</label>
+          <select id="editTodoStatus" name="status" required>
+            <option value="Not started">Not Started</option>
+            <option value="In progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" data-modal="editTodoModal">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i data-lucide="save"></i>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Calendar Event Modal -->
+  <div class="modal" id="addCalendarModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i data-lucide="calendar-plus"></i>
+          Add Calendar Event
+        </h2>
+        <button class="modal-close" data-modal="addCalendarModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="addCalendarForm">
+        <div class="form-group">
+          <label for="eventName">Event Name</label>
+          <input type="text" id="eventName" name="name" required placeholder="Enter event name...">
+        </div>
+        <div class="form-group">
+          <label for="eventStartDate">Start Date</label>
+          <input type="date" id="eventStartDate" name="startDate" required>
+        </div>
+        <div class="form-group">
+          <label for="eventEndDate">End Date (Optional)</label>
+          <input type="date" id="eventEndDate" name="endDate">
+        </div>
+        <div class="form-group">
+          <label for="eventLocation">Location (Optional)</label>
+          <input type="text" id="eventLocation" name="location" placeholder="Enter location...">
+        </div>
+        <div class="form-group">
+          <label for="eventTags">Tags (Optional)</label>
+          <input type="text" id="eventTags" name="tags" placeholder="Comma-separated tags...">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" data-modal="addCalendarModal">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i data-lucide="check"></i>
+            Add Event
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Calendar Event Modal -->
+  <div class="modal" id="editCalendarModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i data-lucide="calendar-edit"></i>
+          Edit Calendar Event
+        </h2>
+        <button class="modal-close" data-modal="editCalendarModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="editCalendarForm">
+        <input type="hidden" id="editEventId" name="id">
+        <div class="form-group">
+          <label for="editEventName">Event Name</label>
+          <input type="text" id="editEventName" name="name" required placeholder="Enter event name...">
+        </div>
+        <div class="form-group">
+          <label for="editEventStartDate">Start Date</label>
+          <input type="date" id="editEventStartDate" name="startDate" required>
+        </div>
+        <div class="form-group">
+          <label for="editEventEndDate">End Date (Optional)</label>
+          <input type="date" id="editEventEndDate" name="endDate">
+        </div>
+        <div class="form-group">
+          <label for="editEventLocation">Location (Optional)</label>
+          <input type="text" id="editEventLocation" name="location" placeholder="Enter location...">
+        </div>
+        <div class="form-group">
+          <label for="editEventTags">Tags (Optional)</label>
+          <input type="text" id="editEventTags" name="tags" placeholder="Comma-separated tags...">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="editEventDone" name="done">
+            Mark as completed
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" data-modal="editCalendarModal">Cancel</button>
+          <button type="submit" class="btn-primary">
+            <i data-lucide="save"></i>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

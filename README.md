@@ -1,22 +1,27 @@
 # 📝 Notion Manager
 
-A modern web application and CLI tool for managing Notion TODO lists and calendar events with Malaysian public holiday integration.
+A modern serverless web application for managing Notion TODO lists and calendar events with Malaysian public holiday integration.
 
 ![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)
 ![Notion API](https://img.shields.io/badge/Notion-API-blue.svg)
-![Express](https://img.shields.io/badge/Express-5.1-lightgrey.svg)
+![Netlify](https://img.shields.io/badge/Netlify-Serverless-00C7B7.svg)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+> **Version 2.0** - Now powered by Netlify Functions with JWT authentication
 
 ## ✨ Features
 
 ### 🌐 Web Interface
 
-- **Password Protected** - Secure login with session management
+- **JWT Authentication** - Secure login with token-based auth (24-hour expiry)
+- **Serverless Backend** - Netlify Functions for auto-scaling
 - **Dual View System** - Todo list and calendar in one application
 - **Malaysian Holidays** - Automatic integration of public holidays
 - **Interactive Calendar** - Visual grid with event indicators
-- **Responsive Design** - Works on desktop and mobile
+- **Responsive Design** - Mobile-first, works on all devices
 - **Grid/List View** - Toggle between card and list layouts (desktop only)
+- **CSS Variables** - Consistent design system with standardized styling
 
 ### 📅 Calendar Features
 
@@ -91,10 +96,16 @@ A modern web application and CLI tool for managing Notion TODO lists and calenda
 
 5. **Run the application**
 
+   **Option A: Netlify Dev (Recommended)**
+   ```bash
+   npm run dev
+   ```
+   Open browser: `http://localhost:8888`
+
+   **Option B: Legacy Express Server**
    ```bash
    npm start
    ```
-
    Open browser: `http://localhost:3000`
 
 ## ⚙️ Configuration
@@ -182,18 +193,39 @@ Features:
 
 ```
 notion-manager/
-├── server.js              # Express web server
-├── index.ejs              # Main web interface
-├── login.ejs              # Login page
-├── todo.js                # CLI interface (legacy)
-├── fetch-holidays.js      # Holiday data fetcher
-├── holidays.json          # Malaysian holidays cache
-├── package.json           # Dependencies
-├── .env                   # Environment variables (git-ignored)
-├── .env.example           # Environment template
-├── DEPLOY_RENDER.md       # Deployment guide
-├── CLAUDE.md              # Development instructions
-└── README.md              # This file
+├── netlify/
+│   └── functions/          # Serverless backend (PRIMARY)
+│       ├── utils/
+│       │   └── auth.js     # JWT authentication helpers
+│       ├── login.js        # Login endpoint
+│       ├── get-todos.js    # Fetch todos
+│       ├── add-todo.js     # Create todo
+│       ├── edit-todo.js    # Update todo
+│       ├── done-todo.js    # Mark todo done
+│       ├── delete-todo.js  # Delete todo
+│       ├── get-calendar.js # Fetch calendar
+│       ├── add-calendar.js # Create event
+│       ├── edit-calendar.js # Update event
+│       ├── done-calendar.js # Mark event done
+│       └── delete-calendar.js # Delete event
+├── public/                 # Static frontend (PRIMARY)
+│   ├── login.html          # Login page ✅
+│   ├── index.html          # Main app ✅
+│   ├── styles.css          # Main stylesheet ✅
+│   ├── calendar.css        # Calendar styles ✅
+│   ├── app.js              # Client-side logic ✅
+│   └── holidays.json       # Malaysian holidays
+├── server.js               # Express server (LEGACY)
+├── index.ejs               # Server-rendered UI (LEGACY)
+├── login.ejs               # Server-rendered auth (LEGACY)
+├── todo.js                 # CLI interface (LEGACY)
+├── fetch-holidays.js       # Holiday data fetcher
+├── netlify.toml            # Netlify configuration
+├── package.json            # Dependencies
+├── .env                    # Environment variables (git-ignored)
+├── .env.example            # Environment template
+├── CLAUDE.md               # Development instructions
+└── README.md               # This file
 ```
 
 ## 🛠️ Development
@@ -224,29 +256,45 @@ node fetch-holidays.js
 
 ## 🚢 Deployment
 
-### Deploy to Render
+### Option 1: Deploy to Netlify (Recommended)
 
-See detailed guide: [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
+Serverless deployment with auto-scaling and zero cold starts.
 
 **Quick steps:**
 
-1. Push code to GitHub
-2. Create Web Service on Render
-3. Set environment variables in Render dashboard
-4. Deploy!
+1. Install Netlify CLI: `npm install -g netlify-cli`
+2. Login: `netlify login`
+3. Initialize: `netlify init`
+4. Set environment variables in Netlify Dashboard:
+   - `NOTION_API_KEY`
+   - `DATABASE_ID`
+   - `CALENDAR_DATABASE_ID`
+   - `APP_PASSWORD`
+   - `JWT_SECRET`
+   - `HOLIDAY_STATE`
+5. Deploy: `netlify deploy --prod`
 
-**Important:**
+**Advantages:**
+- ✅ Auto-scaling
+- ✅ No cold starts
+- ✅ Free tier: 125k requests/month
+- ✅ Always-on (no sleep)
+- ✅ Automatic HTTPS
+- ✅ Global CDN
 
-- `PORT` uses `process.env.PORT` (already configured)
-- Start command: `npm start` (already configured)
-- All environment variables must be set in Render
-- Free tier: server sleeps after 15min idle
+### Option 2: Deploy to Render (Legacy)
 
-### Key Deployment Settings
+Traditional server deployment using Express.js.
+
+See detailed guide: [DEPLOY_RENDER.md](DEPLOY_RENDER.md)
+
+**Note:** This uses the legacy Express server. Netlify deployment is recommended for production.
+
+**Key Deployment Settings:**
 
 ```
 Build Command: npm install
-Start Command: npm start
+Start Command: npm start (or netlify dev for local)
 Node Version: >=18.0.0
 ```
 
@@ -359,11 +407,14 @@ cat holidays.json
 
 ## 🛡️ Security
 
-- **Session-based authentication** - Password protected access
+- **JWT Authentication** - Token-based auth with 24-hour expiry
+- **Serverless Functions** - Isolated execution environment
 - **Environment variables** - Credentials in `.env` (git-ignored)
 - **Input validation** - All user inputs validated
 - **API error handling** - Graceful error recovery
-- **HTTPS ready** - Works with Render's automatic HTTPS
+- **HTTPS ready** - Automatic HTTPS with Netlify
+- **CORS configured** - Proper cross-origin handling
+- **No session storage** - Stateless authentication (no session vulnerabilities)
 
 ## 🤝 Contributing
 
@@ -397,4 +448,23 @@ If you encounter issues:
 
 **Made with ❤️ for productivity enthusiasts**
 
-**Version:** 1.0.0 (Web + CLI Edition)
+**Version:** 2.0.0 (Netlify Serverless Edition)
+
+---
+
+## 🚀 Migration Status
+
+**Current Progress: 100% Complete ✅**
+
+✅ **Complete:**
+- Backend (Netlify Functions) - 100%
+- JWT Authentication - 100%
+- Login Page - 100%
+- Main Application (index.html + app.js) - 100%
+- CSS Styling - 100%
+- Configuration - 100%
+- Documentation - 100%
+
+🎉 **Status:** Production Ready!
+
+See [FINAL_STATUS.md](FINAL_STATUS.md) for detailed migration information.

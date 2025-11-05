@@ -92,4 +92,10 @@ claude.md
 
 cookies.txt
 
-null
+# Migration documentation (internal only, not for public repo)
+DEPLOY_NETLIFY_V2.md
+MIGRATION_SUMMARY.md
+FINAL_STATUS.md
+
+# Netlify
+.netlify/

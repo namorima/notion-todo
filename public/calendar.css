@@ -1,0 +1,67 @@
+/* Calendar-specific styles - imported by main styles.css */
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.calendar-events-list {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: var(--space-sm);
+}
+
+/* Custom Scrollbar */
+.calendar-events-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.calendar-events-list::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: var(--radius-sm);
+  margin: var(--space-sm) 0;
+}
+
+.calendar-events-list::-webkit-scrollbar-thumb {
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-normal);
+}
+
+.calendar-events-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-xs);
+}
+
+.calendar-day {
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.calendar-day.has-event {
+  background: var(--primary);
+  color: var(--text-white);
+  font-weight: 600;
+}
+
+.calendar-day.today {
+  background: var(--green-check);
+  color: var(--text-white);
+  font-weight: 600;
+}

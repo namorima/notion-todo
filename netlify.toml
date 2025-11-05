@@ -1,0 +1,32 @@
+[build]
+  # Directory with static files
+  publish = "public"
+
+  # No build command needed for static files
+  command = "echo 'No build required'"
+
+[functions]
+  # Directory for Netlify Functions
+  directory = "netlify/functions"
+
+  # Node.js version
+  node_bundler = "esbuild"
+
+[[redirects]]
+  # Redirect root to login if not authenticated (handled client-side)
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  # SPA fallback - serve index.html for all routes
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  # Local development configuration
+  # No framework server needed - serving static files only
+  port = 8888
+  publish = "public"
+  functions = "netlify/functions"
