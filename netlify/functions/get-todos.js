@@ -81,7 +81,7 @@ export async function handler(event, context) {
     const todos = todoData.results.map(page => {
       const name = page.properties.name?.title?.[0]?.plain_text || 'Untitled';
       const status = page.properties.status?.status?.name || 'Not started';
-      const category = page.properties.kategori?.select?.name || 'Tiada kategori';
+      const kategori = page.properties.kategori?.select?.name || 'Tiada kategori';
       const dueDate = page.properties['due date']?.date?.start || null;
       const createdTime = page.created_time;
 
@@ -91,8 +91,8 @@ export async function handler(event, context) {
         id: page.id,
         name,
         status,
-        category,
-        categoryEmoji: getCategoryEmoji(category),
+        kategori,
+        categoryEmoji: getCategoryEmoji(kategori),
         dueDate,
         dueDateFormatted: formatDate(dueDate),
         statusIcon: statusInfo.icon,

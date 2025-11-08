@@ -21,7 +21,7 @@ export async function handler(event, context) {
   }
 
   try {
-    const { id, name, category, dueDate } = JSON.parse(event.body);
+    const { id, name, kategori, dueDate, status } = JSON.parse(event.body);
 
     if (!id || !name) {
       return createResponse(400, { error: 'ID and name are required' });
@@ -33,9 +33,9 @@ export async function handler(event, context) {
       }
     };
 
-    if (category && category !== 'Tiada kategori') {
+    if (kategori && kategori !== 'Tiada kategori') {
       properties.kategori = {
-        select: { name: category }
+        select: { name: kategori }
       };
     } else {
       properties.kategori = {
@@ -50,6 +50,12 @@ export async function handler(event, context) {
     } else {
       properties['due date'] = {
         date: null
+      };
+    }
+
+    if (status) {
+      properties.status = {
+        status: { name: status }
       };
     }
 

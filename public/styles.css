@@ -161,22 +161,27 @@ body {
   background: rgba(255, 255, 255, 0.2);
   color: var(--text-white);
   border: none;
-  padding: var(--space-sm) var(--space-lg);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  padding: 12px;
+  border-radius: var(--radius-round);
+  font-size: var(--font-lg);
   cursor: pointer;
   transition: all var(--transition-normal);
   backdrop-filter: blur(10px);
-  font-weight: 600;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+}
+
+.logout-btn-text {
+  display: none;
 }
 
 .logout-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.1);
 }
 
 /* ========================================
@@ -194,13 +199,16 @@ body {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: var(--text-white);
-  padding: 12px var(--space-xl);
-  font-size: var(--font-md);
+  padding: 10px 20px;
+  font-size: var(--font-sm);
   font-weight: 600;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all var(--transition-normal);
   backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tab-btn:hover {
@@ -292,14 +300,15 @@ body {
 
 .modal-content {
   background: var(--bg-white);
-  border-radius: var(--radius-lg);
-  padding: var(--space-xl);
+  border-radius: 20px;
+  padding: 30px;
   max-width: 500px;
   width: 90%;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp var(--transition-normal);
   max-height: 90vh;
   overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .modal-header {
@@ -315,24 +324,28 @@ body {
   margin: 0;
 }
 
-.close-button {
-  background: none;
+.close-button,
+.modal-close {
+  background: rgba(0, 0, 0, 0.05);
   border: none;
-  font-size: var(--font-xl);
+  font-size: var(--font-lg);
   color: var(--text-tertiary);
   cursor: pointer;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-round);
-  transition: all var(--transition-normal);
+  transition: all 0.3s ease;
 }
 
-.close-button:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+.close-button:hover,
+.modal-close:hover {
+  background: var(--danger);
+  color: white;
+  transform: rotate(90deg);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
 }
 
 /* Form Styles */
@@ -342,25 +355,38 @@ body {
 
 .form-group label {
   display: block;
-  margin-bottom: var(--space-xs);
+  margin-bottom: 8px;
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 600;
+  font-size: var(--font-sm);
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: var(--radius-md);
   font-size: var(--font-md);
-  transition: border-color var(--transition-normal);
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover {
+  border-color: #d0d0d0;
+  background: #ffffff;
 }
 
 .form-group input:focus,
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
   outline: none;
   border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .checkbox-label {
@@ -554,13 +580,9 @@ body {
 
 .stat-card.active {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-}
-
-.stat-card.active {
-  border-color: rgb(161, 178, 255);
-  background: var(--bg-white);
-  box-shadow: 0 8px 25px rgba(161, 178, 255, 0.4);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), 0 8px 25px rgba(102, 126, 234, 0.3);
+  transform: translateY(-3px) scale(1.02);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
 
 .stat-card .number {
@@ -585,6 +607,194 @@ body {
 }
 
 /* ========================================
+   Modern Button Styles
+   ======================================== */
+
+/* Filter View Container */
+.filter-view-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+  flex-wrap: nowrap;
+}
+
+/* Filter Buttons */
+.filter-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--text-white);
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.filter-btn.active:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+/* Count Badges */
+.count-badge {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: 6px;
+  min-width: 24px;
+  text-align: center;
+  display: inline-block;
+}
+
+.filter-btn.active .count-badge {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: var(--space-xs);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.view-btn {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.view-btn:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary);
+}
+
+.view-btn.active {
+  background: var(--primary);
+  color: var(--text-white);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Add Event Button (Calendar) */
+.add-event-btn {
+  padding: 10px 18px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--text-white);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.add-event-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
+}
+
+.add-event-btn:active {
+  transform: translateY(0);
+}
+
+/* Modal Actions Buttons */
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  padding: 12px 24px;
+  border: 2px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(102, 126, 234, 0.05);
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  padding: 12px 24px;
+  border: none;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--text-white);
+  border-radius: var(--radius-md);
+  font-size: var(--font-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.5);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ========================================
    TODO Cards & Grid
    ======================================== */
 
@@ -602,76 +812,63 @@ body {
 }
 
 .todos-grid.list-view .todo-card {
-  display: flex !important;
-  flex-direction: row !important;
+  display: grid !important;
+  grid-template-columns: minmax(200px, 2fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(100px, 1fr) auto !important;
   align-items: center !important;
   padding: var(--space-md) var(--space-lg) !important;
-  gap: var(--space-lg) !important;
+  gap: var(--space-md) !important;
 }
 
 .todos-grid.list-view .todo-header {
-  order: 1 !important;
-  margin-bottom: 0 !important;
-  flex: 1 !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: var(--space-sm) !important;
+  display: none !important;
 }
 
 .todos-grid.list-view .todo-title {
   font-size: var(--font-md) !important;
+  margin: 0 !important;
+  order: 1 !important;
+  grid-column: 1 !important;
 }
 
-.todos-grid.list-view .created-date {
-  position: static !important;
-  font-size: var(--font-xs) !important;
-  margin-left: var(--space-md) !important;
+.todos-grid.list-view .todo-footer {
+  display: contents !important;
+  margin: 0 !important;
 }
 
-.todos-grid.list-view .category-badge {
+.todos-grid.list-view .todo-date {
   order: 2 !important;
-  margin-bottom: 0 !important;
-  font-size: var(--font-sm) !important;
-  padding: 4px var(--space-sm) !important;
-  flex-shrink: 0 !important;
+  grid-column: 2 !important;
+  margin: 0 !important;
 }
 
-.todos-grid.list-view .todo-meta {
+.todos-grid.list-view .todo-footer .category-badge {
+  display: inline-block !important;
   order: 3 !important;
-  margin-bottom: 0 !important;
-  gap: var(--space-sm) !important;
-  flex-shrink: 0 !important;
-}
-
-.todos-grid.list-view .todo-meta .status-badge {
+  margin: 0 !important;
   font-size: var(--font-sm) !important;
   padding: 4px var(--space-sm) !important;
+  flex-shrink: 0 !important;
+  grid-column: 3 !important;
+  width: fit-content !important;
 }
 
-.todos-grid.list-view .todo-meta span {
-  font-size: 0.8rem !important;
+.todos-grid.list-view .todo-footer .status-badge {
+  display: inline-flex !important;
+  order: 4 !important;
+  font-size: var(--font-sm) !important;
+  padding: 4px var(--space-sm) !important;
+  grid-column: 4 !important;
+  width: fit-content !important;
 }
 
 .todos-grid.list-view .todo-actions {
-  order: 4 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  margin-left: auto !important;
+  order: 5 !important;
+  margin: 0 !important;
   display: flex !important;
   gap: var(--space-xs) !important;
   flex-shrink: 0 !important;
-}
-
-.todos-grid.list-view .todo-actions .btn-success {
-  font-size: 0.8rem !important;
-  padding: 6px var(--space-sm) !important;
-  white-space: nowrap !important;
-}
-
-.todos-grid.list-view .btn-icon {
-  font-size: 0.95rem !important;
-  padding: 6px var(--space-sm) !important;
+  grid-column: 5 !important;
+  justify-self: end !important;
 }
 
 /* TODO Card */
@@ -766,6 +963,38 @@ body {
   font-size: 0.9rem;
 }
 
+/* TODO Footer */
+.todo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-md);
+}
+
+.todo-footer .category-badge,
+.todo-footer .status-badge {
+  display: none;
+}
+
+.todo-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+
+.todo-date i {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.todo-date.overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* Status Badge */
 .status-badge {
   display: inline-flex;
@@ -802,6 +1031,105 @@ body {
   display: flex;
   gap: var(--space-sm);
   margin-top: var(--space-md);
+}
+
+/* Todo Action Buttons */
+.todo-action-btn {
+  padding: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.todo-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.todo-action-btn.done {
+  color: var(--success);
+}
+
+.todo-action-btn.done:hover {
+  background: var(--success);
+  color: white;
+  box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+.todo-action-btn.edit {
+  color: var(--primary);
+}
+
+.todo-action-btn.edit:hover {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+}
+
+.todo-action-btn.delete {
+  color: var(--danger);
+}
+
+.todo-action-btn.delete:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 4px 10px rgba(244, 67, 54, 0.3);
+}
+
+/* Event Action Buttons (Calendar) */
+.event-action-btn {
+  padding: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.event-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.event-action-btn.done {
+  color: var(--success);
+}
+
+.event-action-btn.done:hover {
+  background: var(--success);
+  color: white;
+}
+
+.event-action-btn.edit {
+  color: var(--primary);
+}
+
+.event-action-btn.edit:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.event-action-btn.delete {
+  color: var(--danger);
+}
+
+.event-action-btn.delete:hover {
+  background: var(--danger);
+  color: white;
 }
 
 /* Empty State */

@@ -147,15 +147,21 @@ class NotionManager {
   }
 
   renderStats() {
-    const total = this.todos.length;
-    const pending = this.todos.filter(t => t.status === 'Not started').length;
-    const inProgress = this.todos.filter(t => t.status === 'In progress').length;
+    // Calculate counts for filter badges
+    const all = this.todos.length;
     const completed = this.todos.filter(t => t.status === 'Done').length;
+    const overdue = this.todos.filter(t => {
+      if (t.status === 'Done') return false;
+      const dueDate = new Date(t.dueDate);
+      return dueDate < new Date();
+    }).length;
+    const pending = this.todos.filter(t => t.status === 'Not started').length;
 
-    document.getElementById('totalTodos').textContent = total;
-    document.getElementById('pendingTodos').textContent = pending;
-    document.getElementById('inProgressTodos').textContent = inProgress;
-    document.getElementById('completedTodos').textContent = completed;
+    // Update count badges
+    document.getElementById('countAll').textContent = all;
+    document.getElementById('countCompleted').textContent = completed;
+    document.getElementById('countOverdue').textContent = overdue;
+    document.getElementById('countPending').textContent = pending;
   }
 
   renderTodos() {
@@ -210,8 +216,8 @@ class NotionManager {
     return `
       <div class="todo-card ${isOverdue ? 'overdue' : ''} ${todo.status === 'Done' ? 'done' : ''}">
         <div class="todo-header">
-          <span class="todo-category">${categoryEmoji} ${todo.kategori}</span>
-          <span class="todo-status ${statusInfo.class}">${statusInfo.label}</span>
+          ${todo.kategori ? `<span class="todo-category">${categoryEmoji} ${todo.kategori}</span>` : ''}
+          ${todo.status && todo.status !== 'Not started' ? `<span class="todo-status ${statusInfo.class}">${statusInfo.label}</span>` : ''}
         </div>
         <h3 class="todo-title">${this.escapeHtml(todo.name)}</h3>
         <div class="todo-footer">
@@ -219,6 +225,8 @@ class NotionManager {
             <i data-lucide="calendar"></i>
             <span>${formattedDate}</span>
           </div>
+          ${todo.kategori ? `<span class="category-badge category-${todo.kategori}">${categoryEmoji} ${todo.kategori}</span>` : '<span class="category-badge">-</span>'}
+          ${todo.status && todo.status !== 'Not started' ? `<span class="status-badge ${statusInfo.class}">${statusInfo.label}</span>` : '<span class="status-badge status-secondary">-</span>'}
           <div class="todo-actions">
             ${todo.status !== 'Done' ? `
               <button class="todo-action-btn done" data-id="${todo.id}" title="Mark as Done">
@@ -272,8 +280,8 @@ class NotionManager {
       html += this.createCalendarDay(day, false, false);
     }
 
-    // Next month days
-    const remainingDays = 42 - (startingDayOfWeek + daysInMonth);
+    // Next month days (7x5 grid = 35 total days)
+    const remainingDays = 35 - (startingDayOfWeek + daysInMonth);
     for (let day = 1; day <= remainingDays; day++) {
       html += this.createCalendarDay(day, false, true);
     }
@@ -339,7 +347,7 @@ class NotionManager {
   renderCalendarEvents() {
     const container = document.getElementById('calendarEventsList');
 
-    // Filter events - show all events or selected date
+    // Filter events - show events for current calendar month
     let events = [...this.calendar];
 
     if (this.selectedDate) {
@@ -356,9 +364,13 @@ class NotionManager {
         return false;
       });
     } else {
-      // Show ALL events (upcoming, done, and past)
-      // Just filter out events without dates
-      events = events.filter(event => event.date && event.date.start);
+      // Show events for current calendar month only
+      events = events.filter(event => {
+        if (!event.date || !event.date.start) return false;
+        const eventDate = new Date(event.date.start);
+        return eventDate.getMonth() === this.currentMonth &&
+               eventDate.getFullYear() === this.currentYear;
+      });
     }
 
     // Sort by date (most recent first, then upcoming)
@@ -405,26 +417,13 @@ class NotionManager {
 
     return `
       <div class="calendar-event-card ${event.done ? 'done' : ''}">
-        <div class="event-header">
-          <h3>${this.escapeHtml(event.name)}</h3>
-          <div class="event-actions">
-            ${!event.done ? `
-              <button class="event-action-btn done" data-id="${event.id}" title="Mark as Done">
-                <i data-lucide="check-circle"></i>
-              </button>
-            ` : ''}
-            <button class="event-action-btn edit" data-id="${event.id}" title="Edit">
-              <i data-lucide="edit-2"></i>
-            </button>
-            <button class="event-action-btn delete" data-id="${event.id}" title="Delete">
-              <i data-lucide="trash-2"></i>
-            </button>
-          </div>
-        </div>
-        <div class="event-details">
-          <div class="event-date">
-            <i data-lucide="calendar"></i>
-            <span>${startDate}${endDate ? ` - ${endDate}` : ''}</span>
+        <div class="event-content">
+          <div class="event-title-date">
+            <h3>${this.escapeHtml(event.name)}</h3>
+            <div class="event-date">
+              <i data-lucide="calendar"></i>
+              <span>${startDate}${endDate ? ` - ${endDate}` : ''}</span>
+            </div>
           </div>
           ${event.location ? `
             <div class="event-location">
@@ -433,6 +432,19 @@ class NotionManager {
             </div>
           ` : ''}
           ${tags ? `<div class="event-tags">${tags}</div>` : ''}
+        </div>
+        <div class="event-actions">
+          ${!event.done ? `
+            <button class="event-action-btn done" data-id="${event.id}" title="Mark as Done">
+              <i data-lucide="check-circle"></i>
+            </button>
+          ` : ''}
+          <button class="event-action-btn edit" data-id="${event.id}" title="Edit">
+            <i data-lucide="edit-2"></i>
+          </button>
+          <button class="event-action-btn delete" data-id="${event.id}" title="Delete">
+            <i data-lucide="trash-2"></i>
+          </button>
         </div>
       </div>
     `;
@@ -632,6 +644,7 @@ class NotionManager {
     }
 
     this.renderCalendar();
+    this.renderCalendarEvents(); // Re-render events list when month changes
     if (window.lucide) lucide.createIcons();
   }
 

@@ -22,7 +22,7 @@ export async function handler(event, context) {
   }
 
   try {
-    const { name, category, dueDate } = JSON.parse(event.body);
+    const { name, kategori, dueDate } = JSON.parse(event.body);
 
     if (!name) {
       return createResponse(400, { error: 'Name is required' });
@@ -37,9 +37,9 @@ export async function handler(event, context) {
       }
     };
 
-    if (category && category !== 'Tiada kategori') {
+    if (kategori && kategori !== 'Tiada kategori') {
       properties.kategori = {
-        select: { name: category }
+        select: { name: kategori }
       };
     }
 

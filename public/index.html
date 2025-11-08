@@ -40,70 +40,36 @@
 
     <!-- Todos Tab Content -->
     <div class="tab-content active" id="todosContent">
-      <!-- Statistics Cards (Clickable) -->
-      <div class="stats" id="statsContainer">
-        <div class="stat-card clickable" data-filter="all">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-            <i data-lucide="list-todo"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value" id="totalTodos">0</div>
-            <div class="stat-label">Total Tasks</div>
-          </div>
+      <!-- Filter Buttons with Count Badges and View Toggle -->
+      <div class="filter-view-container">
+        <div class="filter-buttons" id="filterButtons">
+          <button class="filter-btn active" data-filter="all">
+            <i data-lucide="list"></i> All
+            <span class="count-badge" id="countAll">0</span>
+          </button>
+          <button class="filter-btn" data-filter="completed">
+            <i data-lucide="check"></i> Completed
+            <span class="count-badge" id="countCompleted">0</span>
+          </button>
+          <button class="filter-btn" data-filter="overdue">
+            <i data-lucide="alert-circle"></i> Overdue
+            <span class="count-badge" id="countOverdue">0</span>
+          </button>
+          <button class="filter-btn" data-filter="pending">
+            <i data-lucide="clock"></i> Pending
+            <span class="count-badge" id="countPending">0</span>
+          </button>
         </div>
-        <div class="stat-card clickable" data-filter="pending">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-            <i data-lucide="clock-4"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value" id="pendingTodos">0</div>
-            <div class="stat-label">Pending</div>
-          </div>
-        </div>
-        <div class="stat-card clickable" data-filter="in-progress">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-            <i data-lucide="play-circle"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value" id="inProgressTodos">0</div>
-            <div class="stat-label">In Progress</div>
-          </div>
-        </div>
-        <div class="stat-card clickable" data-filter="completed">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-            <i data-lucide="circle-check"></i>
-          </div>
-          <div class="stat-info">
-            <div class="stat-value" id="completedTodos">0</div>
-            <div class="stat-label">Completed</div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Filter Buttons -->
-      <div class="filter-buttons" id="filterButtons">
-        <button class="filter-btn active" data-filter="all">
-          <i data-lucide="list"></i> All
-        </button>
-        <button class="filter-btn" data-filter="completed">
-          <i data-lucide="check"></i> Completed
-        </button>
-        <button class="filter-btn" data-filter="overdue">
-          <i data-lucide="alert-circle"></i> Overdue
-        </button>
-        <button class="filter-btn" data-filter="pending">
-          <i data-lucide="clock"></i> Pending
-        </button>
-      </div>
-
-      <!-- View Toggle (Desktop only) -->
-      <div class="view-toggle" id="viewToggle">
-        <button class="view-btn active" data-view="grid">
-          <i data-lucide="grid-3x3"></i>
-        </button>
-        <button class="view-btn" data-view="list">
-          <i data-lucide="list"></i>
-        </button>
+        <!-- View Toggle (Desktop only) -->
+        <div class="view-toggle" id="viewToggle">
+          <button class="view-btn active" data-view="grid">
+            <i data-lucide="grid-3x3"></i>
+          </button>
+          <button class="view-btn" data-view="list">
+            <i data-lucide="list"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Todos Grid -->

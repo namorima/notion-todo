@@ -47,7 +47,7 @@ export async function handler(event, context) {
       const dateEnd = dateObj?.end || null;
       const location = page.properties.Location?.rich_text?.[0]?.plain_text || '';
       const tags = page.properties.Tags?.multi_select?.map(t => t.name) || [];
-      const selesai = page.properties.Selesai?.checkbox || false;
+      const cuti = page.properties.Cuti?.checkbox || false;
 
       // Format date: if both start and end exist, show "start → end"
       let dateFormatted = '-';
@@ -60,13 +60,14 @@ export async function handler(event, context) {
       return {
         id: page.id,
         name,
-        date: dateStart,
-        dateStart,
-        dateEnd,
+        date: {
+          start: dateStart,
+          end: dateEnd
+        },
         dateFormatted,
         location,
         tags,
-        selesai
+        done: cuti
       };
     });
 
