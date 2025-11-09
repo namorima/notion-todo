@@ -41,6 +41,41 @@ class NotionManager {
     if (window.lucide) {
       lucide.createIcons();
     }
+
+    // Setup scroll animations
+    this.setupScrollAnimations();
+  }
+
+  setupScrollAnimations() {
+    // Create Intersection Observer for scroll reveal animations
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          // Optionally stop observing after reveal
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    // Observe elements with scroll-reveal class
+    const observeScrollElements = () => {
+      document.querySelectorAll('.scroll-reveal').forEach(element => {
+        observer.observe(element);
+      });
+    };
+
+    // Initial observation
+    observeScrollElements();
+
+    // Re-observe after data loads
+    this.scrollObserver = observer;
   }
 
   checkAuth() {
