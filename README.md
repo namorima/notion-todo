@@ -19,9 +19,11 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 - **Dual View System** - Todo list and calendar in one application
 - **Malaysian Holidays** - Automatic integration of public holidays
 - **Interactive Calendar** - Visual grid with event indicators
-- **Responsive Design** - Mobile-first, works on all devices
+- **Responsive Design** - Mobile-first, fully optimized for all devices
 - **Grid/List View** - Toggle between card and list layouts (desktop only)
 - **CSS Variables** - Consistent design system with standardized styling
+- **Loading Indicators** - Visual feedback when fetching data
+- **Date Filtering** - Click calendar dates to filter events with clear button
 
 ### 📅 Calendar Features
 
@@ -29,16 +31,22 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 - **Date Ranges** - Support for multi-day events
 - **Visual Indicators** - Blue circles for events, red borders for holidays
 - **Weekend Highlighting** - Friday and Saturday displayed in blue (30% opacity)
+- **Weekend Events** - Special gradient background for events on weekends
 - **Event Tooltips** - Hover over dates to see event names
-- **Holiday Display** - Previous month holidays shown with transparent styling
+- **Holiday Display** - Previous/next month dates shown with 50% opacity
+- **Date Filtering** - Click any date to filter events, red clear button appears
+- **Completion Status** - Mark as Done button shows green when event is completed
+- **Mobile Optimized** - Calendar on top, event list below with stacked action buttons
 
 ### ✅ Todo Management
 
 - **Category System** - Organize with emojis (🔥 Penting, ⚡ Segera, 👤 Pribadi)
 - **Status Tracking** - Not Started, In Progress, Done
 - **Due Date Management** - Visual indicators for overdue tasks
-- **Filtering** - Quick filters by status (All, Completed, Overdue, Pending)
+- **Filtering** - Quick filters by status with count badges (All, Completed, Overdue, Pending)
 - **Real-time Updates** - Changes reflected immediately
+- **Loading Indicator** - Animated spinner while fetching todos
+- **Mobile Optimized** - Filter buttons show icons only, grid/list toggle hidden
 
 ### 🖥️ CLI Interface (Legacy)
 
@@ -123,9 +131,9 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 
 - `Name` (Title) - Event names
 - `Date` (Date) - Event date/date range
-- `Location` (Text) - Event location
+- `Location` (Rich Text) - Event location
 - `Tags` (Multi-select) - Event tags
-- `Selesai` (Checkbox) - Completion status
+- `Cuti` (Checkbox) - Completion status (marked when done)
 
 ### Getting Your Credentials
 
@@ -167,11 +175,14 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 
 4. **Calendar Grid**
 
-   - Click dates to filter events
+   - Click dates to filter events for specific day
+   - Red "Clear Filter" button appears when date is selected
    - Hover over dates to see event tooltips
    - Navigate months with `‹` and `›` buttons
-   - Blue circles = events
+   - Blue circles = events on weekdays
+   - Gradient blue = events on weekends (Fri/Sat)
    - Red borders = holidays
+   - Faded dates = previous/next month (50% opacity)
 
 5. **Logout**
    - Click `🚪 Logout` button (top right)
@@ -367,10 +378,24 @@ cat holidays.json
 2. Check Notion database has required properties:
    - Name (Title)
    - Date (Date)
-   - Location (Text)
+   - Location (Rich Text)
    - Tags (Multi-select)
-   - Selesai (Checkbox)
+   - Cuti (Checkbox)
 3. Ensure integration has access to calendar database
+
+### Mobile Layout Issues
+
+**Issue:** Buttons not displaying correctly on mobile
+
+**Solution:**
+
+1. Clear browser cache
+2. Test with browser width < 768px
+3. Check responsive design in DevTools (F12 → Toggle Device Toolbar)
+4. Mobile features:
+   - Todos: Filter buttons show icons only
+   - Calendar: Event info on left, action buttons stacked on right
+   - Grid/List toggle hidden on mobile
 
 ### Session Not Persisting
 
@@ -462,9 +487,21 @@ If you encounter issues:
 - Login Page - 100%
 - Main Application (index.html + app.js) - 100%
 - CSS Styling - 100%
+- Mobile Responsive Design - 100%
+- Calendar Features (filtering, completion status) - 100%
+- Todos Features (loading indicator, count badges) - 100%
 - Configuration - 100%
 - Documentation - 100%
 
 🎉 **Status:** Production Ready!
+
+**Latest Updates (v2.0.1):**
+- ✅ Mobile responsive layout for Calendar and Todos tabs
+- ✅ Calendar date filtering with clear button
+- ✅ Loading indicators for todos
+- ✅ Weekend events visual highlighting
+- ✅ Completion status indicator (green button when done)
+- ✅ Filter button count badges
+- ✅ Previous/next month opacity styling
 
 See [FINAL_STATUS.md](FINAL_STATUS.md) for detailed migration information.

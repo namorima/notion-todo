@@ -1208,4 +1208,44 @@ body {
   }
 }
 
+/* ========================================
+   Mobile Responsive Layout - Todos Tab
+   ======================================== */
+
+@media (max-width: 768px) {
+  /* Hide text in filter buttons, show icons only */
+  .filter-btn .filter-text {
+    display: none;
+  }
+
+  .filter-btn {
+    padding: var(--space-sm);
+    min-width: 44px;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Hide Grid/List view toggle on mobile */
+  .view-toggle {
+    display: none !important;
+  }
+
+  /* Adjust filter-view-container spacing on mobile */
+  .filter-view-container {
+    justify-content: center;
+    gap: var(--space-sm);
+  }
+
+  /* Keep count badges visible */
+  .count-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 2px 4px;
+    font-size: 0.65rem;
+  }
+}
+
 /* Continue in next message... */
