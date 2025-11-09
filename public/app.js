@@ -458,32 +458,32 @@ class NotionManager {
 
     return `
       <div class="calendar-event-card ${event.done ? 'done' : ''}">
+        ${tags ? `<div class="event-tags">${tags}</div>` : ''}
         <div class="event-content">
           <div class="event-title-date">
             <h3>${this.escapeHtml(event.name)}</h3>
+            ${event.location ? `
+              <div class="event-location">
+                <i data-lucide="map-pin"></i>
+                <span>${this.escapeHtml(event.location)}</span>
+              </div>
+            ` : ''}
             <div class="event-date">
               <i data-lucide="calendar"></i>
               <span>${startDate}${endDate ? ` - ${endDate}` : ''} ${dayCount}</span>
             </div>
           </div>
-          ${event.location ? `
-            <div class="event-location">
-              <i data-lucide="map-pin"></i>
-              <span>${this.escapeHtml(event.location)}</span>
-            </div>
-          ` : ''}
-          ${tags ? `<div class="event-tags">${tags}</div>` : ''}
-        </div>
-        <div class="event-actions">
-          <button class="event-action-btn done ${event.done ? 'completed' : ''}" data-id="${event.id}" title="${event.done ? 'Completed' : 'Mark as Done'}">
-            <i data-lucide="check-circle"></i>
-          </button>
-          <button class="event-action-btn edit" data-id="${event.id}" title="Edit">
-            <i data-lucide="edit-2"></i>
-          </button>
-          <button class="event-action-btn delete" data-id="${event.id}" title="Delete">
-            <i data-lucide="trash-2"></i>
-          </button>
+          <div class="event-actions">
+            <button class="event-action-btn done ${event.done ? 'completed' : ''}" data-id="${event.id}" title="${event.done ? 'Completed' : 'Mark as Done'}">
+              <i data-lucide="check-circle"></i>
+            </button>
+            <button class="event-action-btn edit" data-id="${event.id}" title="Edit">
+              <i data-lucide="edit-2"></i>
+            </button>
+            <button class="event-action-btn delete" data-id="${event.id}" title="Delete">
+              <i data-lucide="trash-2"></i>
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -638,6 +638,67 @@ class NotionManager {
         const date = e.target.closest('.calendar-day').dataset.date;
         this.selectDate(date);
       }
+    });
+
+    // Mobile touch events for calendar tooltips
+    if (window.innerWidth <= 768) {
+      this.setupMobileTooltips();
+    }
+
+    // Re-setup tooltips on window resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        this.setupMobileTooltips();
+      }
+    });
+  }
+
+  setupMobileTooltips() {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const tooltip = document.getElementById('calendarTooltip');
+    let tooltipTimeout;
+
+    if (!calendarGrid || !tooltip) return;
+
+    calendarGrid.addEventListener('touchstart', (e) => {
+      const dayElement = e.target.closest('.calendar-day.has-event');
+      if (!dayElement) {
+        tooltip.classList.remove('show');
+        return;
+      }
+
+      e.preventDefault(); // Prevent default to avoid triggering click
+
+      const date = dayElement.dataset.date;
+      const tooltipText = dayElement.getAttribute('title');
+
+      if (tooltipText) {
+        // Get touch position
+        const touch = e.touches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+
+        // Position tooltip above finger
+        tooltip.textContent = tooltipText;
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y - 60}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+        tooltip.classList.add('show');
+
+        // Auto-hide after 2 seconds
+        clearTimeout(tooltipTimeout);
+        tooltipTimeout = setTimeout(() => {
+          tooltip.classList.remove('show');
+        }, 2000);
+      }
+    });
+
+    calendarGrid.addEventListener('touchend', () => {
+      // Keep tooltip visible for a moment
+      clearTimeout(tooltipTimeout);
+      tooltipTimeout = setTimeout(() => {
+        tooltip.classList.remove('show');
+      }, 1500);
     });
   }
 
@@ -986,15 +1047,34 @@ class NotionManager {
         ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t)
         : [];
 
+      const startDate = formData.get('startDate');
+      const endDate = formData.get('endDate');
+
+      // Validation
+      if (!formData.get('id')) {
+        this.showError('Event ID is missing');
+        return;
+      }
+      if (!formData.get('name')) {
+        this.showError('Event name is required');
+        return;
+      }
+      if (!startDate) {
+        this.showError('Start date is required');
+        return;
+      }
+
       const data = {
         id: formData.get('id'),
         name: formData.get('name'),
-        dateStart: formData.get('startDate'),
-        dateEnd: formData.get('endDate') || formData.get('startDate'),
-        location: formData.get('location'),
+        dateStart: startDate,
+        dateEnd: endDate || startDate,
+        location: formData.get('location') || '',
         tags: tags,
         done: document.getElementById('editEventDone').checked
       };
+
+      console.log('Editing event with data:', data);
 
       await this.apiRequest('edit-calendar', {
         method: 'POST',
