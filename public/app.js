@@ -166,6 +166,13 @@ class NotionManager {
 
   renderTodos() {
     const container = document.getElementById('todosGrid');
+    const loadingIndicator = document.getElementById('todosLoading');
+
+    // Hide loading indicator
+    if (loadingIndicator) {
+      loadingIndicator.style.display = 'none';
+    }
+
     let filteredTodos = this.getFilteredTodos();
 
     if (filteredTodos.length === 0) {
@@ -339,7 +346,6 @@ class NotionManager {
     return `
       <div class="${classes.join(' ')}" data-date="${dateStr}" title="${tooltip}">
         <span class="day-number">${day}</span>
-        ${events.length > 0 ? `<span class="event-indicator">${events.length}</span>` : ''}
       </div>
     `;
   }
@@ -434,11 +440,9 @@ class NotionManager {
           ${tags ? `<div class="event-tags">${tags}</div>` : ''}
         </div>
         <div class="event-actions">
-          ${!event.done ? `
-            <button class="event-action-btn done" data-id="${event.id}" title="Mark as Done">
-              <i data-lucide="check-circle"></i>
-            </button>
-          ` : ''}
+          <button class="event-action-btn done ${event.done ? 'completed' : ''}" data-id="${event.id}" title="${event.done ? 'Completed' : 'Mark as Done'}">
+            <i data-lucide="check-circle"></i>
+          </button>
           <button class="event-action-btn edit" data-id="${event.id}" title="Edit">
             <i data-lucide="edit-2"></i>
           </button>
@@ -480,6 +484,11 @@ class NotionManager {
     // Add event button (calendar tab)
     document.getElementById('addEventBtn').addEventListener('click', () => {
       this.openModal('addCalendarModal');
+    });
+
+    // Clear filter button (calendar tab)
+    document.getElementById('clearFilterBtn').addEventListener('click', () => {
+      this.clearDateFilter();
     });
 
     // Stat cards (clickable filters)
@@ -570,8 +579,12 @@ class NotionManager {
 
       // Calendar event actions
       if (e.target.closest('.event-action-btn.done')) {
-        const id = e.target.closest('.event-action-btn.done').dataset.id;
-        this.markEventDone(id);
+        const btn = e.target.closest('.event-action-btn.done');
+        // Don't allow marking as done if already completed
+        if (!btn.classList.contains('completed')) {
+          const id = btn.dataset.id;
+          this.markEventDone(id);
+        }
       } else if (e.target.closest('.event-action-btn.edit')) {
         const id = e.target.closest('.event-action-btn.edit').dataset.id;
         this.openEditEventModal(id);
@@ -655,6 +668,35 @@ class NotionManager {
     document.querySelectorAll('.calendar-day').forEach(day => {
       day.classList.toggle('selected', day.dataset.date === date);
     });
+
+    // Show clear filter button and update title
+    const clearBtn = document.getElementById('clearFilterBtn');
+    const eventListTitle = document.getElementById('eventListTitle');
+    if (clearBtn && eventListTitle) {
+      clearBtn.style.display = 'flex';
+      const formattedDate = this.formatDate(date);
+      eventListTitle.textContent = `Events on ${formattedDate}`;
+    }
+
+    this.renderCalendarEvents();
+    if (window.lucide) lucide.createIcons();
+  }
+
+  clearDateFilter() {
+    this.selectedDate = null;
+
+    // Remove selected styling from all days
+    document.querySelectorAll('.calendar-day').forEach(day => {
+      day.classList.remove('selected');
+    });
+
+    // Hide clear filter button and reset title
+    const clearBtn = document.getElementById('clearFilterBtn');
+    const eventListTitle = document.getElementById('eventListTitle');
+    if (clearBtn && eventListTitle) {
+      clearBtn.style.display = 'none';
+      eventListTitle.textContent = 'All Events';
+    }
 
     this.renderCalendarEvents();
     if (window.lucide) lucide.createIcons();
@@ -800,8 +842,8 @@ class NotionManager {
 
     const data = {
       name: formData.get('name'),
-      startDate: formData.get('startDate'),
-      endDate: formData.get('endDate') || formData.get('startDate'),
+      dateStart: formData.get('startDate'),
+      dateEnd: formData.get('endDate') || formData.get('startDate'),
       location: formData.get('location'),
       tags: tags
     };
@@ -831,8 +873,8 @@ class NotionManager {
     const data = {
       id: formData.get('id'),
       name: formData.get('name'),
-      startDate: formData.get('startDate'),
-      endDate: formData.get('endDate') || formData.get('startDate'),
+      dateStart: formData.get('startDate'),
+      dateEnd: formData.get('endDate') || formData.get('startDate'),
       location: formData.get('location'),
       tags: tags,
       done: document.getElementById('editEventDone').checked
@@ -924,7 +966,17 @@ class NotionManager {
   }
 
   showLoading() {
-    // Could implement a loading spinner
+    // Show loading indicator for todos
+    const loadingIndicator = document.getElementById('todosLoading');
+    const todosGrid = document.getElementById('todosGrid');
+
+    if (loadingIndicator) {
+      loadingIndicator.style.display = 'flex';
+    }
+    if (todosGrid) {
+      todosGrid.innerHTML = '';
+    }
+
     console.log('Loading...');
   }
 

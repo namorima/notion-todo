@@ -21,7 +21,7 @@ export async function handler(event, context) {
   }
 
   try {
-    const { id, name, dateStart, dateEnd, location, tags } = JSON.parse(event.body);
+    const { id, name, dateStart, dateEnd, location, tags, done } = JSON.parse(event.body);
 
     if (!id || !name || !dateStart) {
       return createResponse(400, { error: 'ID, name, and dateStart are required' });
@@ -33,6 +33,9 @@ export async function handler(event, context) {
       },
       Date: {
         date: dateEnd ? { start: dateStart, end: dateEnd } : { start: dateStart }
+      },
+      Cuti: {
+        checkbox: done === true || done === 'true'
       }
     };
 

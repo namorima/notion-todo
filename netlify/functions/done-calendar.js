@@ -36,7 +36,7 @@ export async function handler(event, context) {
       },
       body: JSON.stringify({
         properties: {
-          Selesai: {
+          Cuti: {
             checkbox: true
           }
         }

@@ -125,6 +125,29 @@
   font-weight: 600;
 }
 
+.calendar-day.other-month {
+  opacity: 0.5;
+}
+
+.calendar-day.weekend {
+  background: rgba(102, 126, 234, 0.3);
+}
+
+/* Weekend days with events - blend weekend blue with event primary color */
+.calendar-day.weekend.has-event {
+  background: linear-gradient(135deg, var(--primary) 0%, rgba(102, 126, 234, 0.8) 100%);
+  color: var(--text-white);
+  font-weight: 600;
+}
+
+.calendar-day.is-holiday {
+  border: 2px solid var(--cuti-rehat);
+}
+
+.calendar-day.is-holiday.other-month {
+  border-color: rgba(220, 38, 38, 0.5);
+}
+
 /* Calendar Events Section */
 .calendar-events-section {
   background: var(--bg-white);
@@ -147,6 +170,33 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+}
+
+.calendar-events-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.clear-filter-btn {
+  background: var(--danger);
+  color: var(--text-white);
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+
+.clear-filter-btn:hover {
+  background: var(--danger-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
 }
 
 .add-event-btn {
@@ -249,4 +299,114 @@
   display: flex;
   gap: var(--space-xs);
   flex-shrink: 0;
+}
+
+/* ========================================
+   Mobile Responsive Layout
+   ======================================== */
+
+@media (max-width: 768px) {
+  /* Calendar layout: stack vertically with calendar on top, events below */
+  .calendar-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  /* Calendar grid comes first (order: 1) */
+  .calendar-grid-container {
+    order: 1;
+    width: 100%;
+  }
+
+  /* Events list comes second (order: 2) */
+  .calendar-events-section {
+    order: 2;
+    width: 100%;
+    margin-top: var(--space-lg);
+  }
+
+  /* Reduce calendar day size for mobile */
+  .calendar-day {
+    height: 40px;
+    font-size: 0.85rem;
+  }
+
+  /* Stack add event button on mobile */
+  .calendar-events-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: stretch;
+  }
+
+  .add-event-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Reduce event list max height on mobile */
+  .calendar-events-list {
+    max-height: 60vh;
+  }
+
+  /* Make event cards more compact on mobile */
+  .calendar-event-card {
+    padding: var(--space-sm);
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .event-title-date {
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: flex-start;
+  }
+
+  /* Stack action buttons vertically on mobile */
+  .event-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: var(--space-xs);
+  }
+
+  .event-action-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .event-action-btn i {
+    margin-right: var(--space-sm);
+  }
+
+  /* Show button labels on mobile */
+  .event-action-btn.done::after {
+    content: 'Mark as Done';
+    margin-left: var(--space-xs);
+  }
+
+  .event-action-btn.done.completed::after {
+    content: 'Completed';
+  }
+
+  .event-action-btn.edit::after {
+    content: 'Edit';
+    margin-left: var(--space-xs);
+  }
+
+  .event-action-btn.delete::after {
+    content: 'Delete';
+    margin-left: var(--space-xs);
+  }
+
+  /* Calendar events actions - stack buttons */
+  .calendar-events-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .clear-filter-btn,
+  .add-event-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
