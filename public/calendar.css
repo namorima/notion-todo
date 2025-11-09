@@ -125,6 +125,15 @@
   font-weight: 600;
 }
 
+/* Today with event - green background with blue border */
+.calendar-day.today.has-event {
+  background: var(--green-check);
+  color: var(--text-white);
+  font-weight: 600;
+  border: 3px solid var(--primary);
+  box-shadow: 0 0 0 2px var(--bg-white), 0 0 12px rgba(102, 126, 234, 0.5);
+}
+
 .calendar-day.other-month {
   opacity: 0.5;
 }
@@ -199,6 +208,28 @@
   box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
 }
 
+.holiday-info-btn {
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-round);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-lg);
+}
+
+.holiday-info-btn:hover {
+  background: var(--primary);
+  color: var(--text-white);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--shadow-primary);
+}
+
 .add-event-btn {
   background: var(--primary);
   color: var(--text-white);
@@ -270,6 +301,19 @@
   gap: var(--space-xs);
   color: var(--text-secondary);
   font-size: var(--font-sm);
+  flex-wrap: wrap;
+}
+
+.day-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(102, 126, 234, 0.15);
+  color: var(--primary);
+  border-radius: 12px;
+  font-size: var(--font-xs);
+  font-weight: 600;
+  margin-left: var(--space-xs);
 }
 
 .event-location {
@@ -397,39 +441,16 @@
   }
 
   .event-action-btn {
-    width: auto;
-    min-width: 32px;
+    width: 32px;
     height: 32px;
     justify-content: center;
     padding: 6px;
+    min-width: auto;
   }
 
-  /* Hide icons, show text labels only */
+  /* Show icons only on mobile - remove text labels */
   .event-action-btn i {
-    display: none;
-  }
-
-  /* Show text labels on mobile */
-  .event-action-btn.done::after {
-    content: 'Mark as Done';
-    font-size: 0.7rem;
-    white-space: nowrap;
-  }
-
-  .event-action-btn.done.completed::after {
-    content: 'Completed';
-    font-size: 0.7rem;
-    white-space: nowrap;
-  }
-
-  .event-action-btn.edit::after {
-    content: 'Edit';
-    font-size: 0.7rem;
-  }
-
-  .event-action-btn.delete::after {
-    content: 'Delete';
-    font-size: 0.7rem;
+    display: block;
   }
 
   /* Calendar events actions - stack buttons */
@@ -443,4 +464,58 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* Holiday List Modal */
+.holiday-list {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: var(--space-md);
+}
+
+.holiday-item {
+  background: var(--bg-white);
+  border-left: 4px solid var(--cuti-rehat);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all var(--transition-normal);
+}
+
+.holiday-item:hover {
+  background: rgba(244, 67, 54, 0.05);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+}
+
+.holiday-info {
+  flex: 1;
+}
+
+.holiday-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-md);
+}
+
+.holiday-date {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.holiday-badge {
+  background: var(--cuti-rehat);
+  color: var(--text-white);
+  padding: 4px 12px;
+  border-radius: var(--radius-round);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  white-space: nowrap;
 }

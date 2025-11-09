@@ -307,20 +307,43 @@ class NotionManager {
       date = new Date(this.currentYear, this.currentMonth, day);
     }
 
-    const dateStr = date.toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
-    const isToday = dateStr === today;
+    // Use local date components to avoid timezone issues
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(date.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayStr}`;
+
+    // Get today's date in local timezone
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isToday = dateStr === todayStr;
     const isWeekend = date.getDay() === 5 || date.getDay() === 6; // Friday or Saturday
 
     // Check for events
     const events = this.calendar.filter(event => {
-      if (!event.date) return false;
-      if (event.date.start === dateStr) return true;
+      if (!event.date || !event.date.start) return false;
+
+      // Normalize event date using local components
+      const eventDate = new Date(event.date.start);
+      const eventYear = eventDate.getFullYear();
+      const eventMonth = String(eventDate.getMonth() + 1).padStart(2, '0');
+      const eventDay = String(eventDate.getDate()).padStart(2, '0');
+      const eventStartStr = `${eventYear}-${eventMonth}-${eventDay}`;
+
+      // Check if date matches start date
+      if (eventStartStr === dateStr) return true;
+
+      // Check if date is within range (for multi-day events)
       if (event.date.end) {
-        const start = new Date(event.date.start);
-        const end = new Date(event.date.end);
-        return date >= start && date <= end;
+        const endDate = new Date(event.date.end);
+        const endYear = endDate.getFullYear();
+        const endMonth = String(endDate.getMonth() + 1).padStart(2, '0');
+        const endDay = String(endDate.getDate()).padStart(2, '0');
+        const eventEndStr = `${endYear}-${endMonth}-${endDay}`;
+
+        return dateStr >= eventStartStr && dateStr <= eventEndStr;
       }
+
       return false;
     });
 
@@ -421,6 +444,18 @@ class NotionManager {
       ? event.tags.map(tag => `<span class="event-tag">${tag}</span>`).join('')
       : '';
 
+    // Calculate day count for multi-day events
+    let dayCount = '';
+    if (event.date?.end && event.date?.start) {
+      const start = new Date(event.date.start);
+      const end = new Date(event.date.end);
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end
+      if (diffDays > 1) {
+        dayCount = `<span class="day-count-badge">(${diffDays} hari)</span>`;
+      }
+    }
+
     return `
       <div class="calendar-event-card ${event.done ? 'done' : ''}">
         <div class="event-content">
@@ -428,7 +463,7 @@ class NotionManager {
             <h3>${this.escapeHtml(event.name)}</h3>
             <div class="event-date">
               <i data-lucide="calendar"></i>
-              <span>${startDate}${endDate ? ` - ${endDate}` : ''}</span>
+              <span>${startDate}${endDate ? ` - ${endDate}` : ''} ${dayCount}</span>
             </div>
           </div>
           ${event.location ? `
@@ -484,6 +519,11 @@ class NotionManager {
     // Add event button (calendar tab)
     document.getElementById('addEventBtn').addEventListener('click', () => {
       this.openModal('addCalendarModal');
+    });
+
+    // Holiday info button (calendar tab)
+    document.getElementById('holidayInfoBtn').addEventListener('click', () => {
+      this.showHolidayModal();
     });
 
     // Clear filter button (calendar tab)
@@ -702,6 +742,55 @@ class NotionManager {
     if (window.lucide) lucide.createIcons();
   }
 
+  showHolidayModal() {
+    const holidayList = document.getElementById('holidayList');
+    const holidayYear = document.getElementById('holidayYear');
+
+    // Set year
+    holidayYear.textContent = `(${this.currentYear})`;
+
+    // Filter holidays for current year
+    const currentYearHolidays = this.holidays.filter(holiday => {
+      const holidayYear = new Date(holiday.date).getFullYear();
+      return holidayYear === this.currentYear;
+    });
+
+    // Sort holidays by date
+    currentYearHolidays.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Render holiday list
+    if (currentYearHolidays.length === 0) {
+      holidayList.innerHTML = `
+        <div class="empty-state">
+          <i data-lucide="calendar-x"></i>
+          <p>No holidays found for ${this.currentYear}</p>
+        </div>
+      `;
+    } else {
+      holidayList.innerHTML = currentYearHolidays.map(holiday => {
+        const date = new Date(holiday.date);
+        const formattedDate = this.formatDate(holiday.date);
+        const dayName = date.toLocaleDateString('en-MY', { weekday: 'long' });
+
+        return `
+          <div class="holiday-item">
+            <div class="holiday-info">
+              <div class="holiday-name">${this.escapeHtml(holiday.name)}</div>
+              <div class="holiday-date">
+                <i data-lucide="calendar"></i>
+                <span>${formattedDate} (${dayName})</span>
+              </div>
+            </div>
+            <div class="holiday-badge">Holiday</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    this.openModal('holidayModal');
+    if (window.lucide) lucide.createIcons();
+  }
+
   openModal(modalId) {
     const modal = document.getElementById(modalId);
     modal.classList.add('active');
@@ -735,10 +824,14 @@ class NotionManager {
     const event = this.calendar.find(e => e.id === id);
     if (!event) return;
 
+    // Convert dates to YYYY-MM-DD format for date inputs
+    const startDate = event.date?.start ? this.formatDateToYYYYMMDD(event.date.start) : '';
+    const endDate = event.date?.end ? this.formatDateToYYYYMMDD(event.date.end) : '';
+
     document.getElementById('editEventId').value = event.id;
     document.getElementById('editEventName').value = event.name;
-    document.getElementById('editEventStartDate').value = event.date?.start || '';
-    document.getElementById('editEventEndDate').value = event.date?.end || '';
+    document.getElementById('editEventStartDate').value = startDate;
+    document.getElementById('editEventEndDate').value = endDate;
     document.getElementById('editEventLocation').value = event.location || '';
     document.getElementById('editEventTags').value = event.tags ? event.tags.join(', ') : '';
     document.getElementById('editEventDone').checked = event.done || false;
@@ -835,52 +928,74 @@ class NotionManager {
   }
 
   async handleAddEvent(form) {
-    const formData = new FormData(form);
-    const tags = formData.get('tags')
-      ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t)
-      : [];
-
-    const data = {
-      name: formData.get('name'),
-      dateStart: formData.get('startDate'),
-      dateEnd: formData.get('endDate') || formData.get('startDate'),
-      location: formData.get('location'),
-      tags: tags
-    };
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
 
     try {
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> Adding...';
+      if (window.lucide) lucide.createIcons();
+
+      const formData = new FormData(form);
+      const tags = formData.get('tags')
+        ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t)
+        : [];
+
+      const data = {
+        name: formData.get('name'),
+        dateStart: formData.get('startDate'),
+        dateEnd: formData.get('endDate') || formData.get('startDate'),
+        location: formData.get('location'),
+        tags: tags
+      };
+
       await this.apiRequest('add-calendar', {
         method: 'POST',
         body: data
       });
 
       this.closeModal('addCalendarModal');
+      form.reset(); // Clear form fields
       await this.loadData();
       this.render();
       this.showSuccess('Event added successfully!');
     } catch (error) {
       console.error('Error adding event:', error);
       this.showError('Failed to add event. Please try again.');
+    } finally {
+      // Restore button state
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      if (window.lucide) lucide.createIcons();
     }
   }
 
   async handleEditEvent(form) {
-    const formData = new FormData(form);
-    const tags = formData.get('tags')
-      ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t)
-      : [];
-
-    const data = {
-      id: formData.get('id'),
-      name: formData.get('name'),
-      dateStart: formData.get('startDate'),
-      dateEnd: formData.get('endDate') || formData.get('startDate'),
-      location: formData.get('location'),
-      tags: tags,
-      done: document.getElementById('editEventDone').checked
-    };
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
 
     try {
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> Saving...';
+      if (window.lucide) lucide.createIcons();
+
+      const formData = new FormData(form);
+      const tags = formData.get('tags')
+        ? formData.get('tags').split(',').map(t => t.trim()).filter(t => t)
+        : [];
+
+      const data = {
+        id: formData.get('id'),
+        name: formData.get('name'),
+        dateStart: formData.get('startDate'),
+        dateEnd: formData.get('endDate') || formData.get('startDate'),
+        location: formData.get('location'),
+        tags: tags,
+        done: document.getElementById('editEventDone').checked
+      };
+
       await this.apiRequest('edit-calendar', {
         method: 'POST',
         body: data
@@ -893,6 +1008,11 @@ class NotionManager {
     } catch (error) {
       console.error('Error editing event:', error);
       this.showError('Failed to update event. Please try again.');
+    } finally {
+      // Restore button state
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      if (window.lucide) lucide.createIcons();
     }
   }
 
@@ -957,6 +1077,26 @@ class NotionManager {
     const date = new Date(dateStr);
     const options = { day: 'numeric', month: 'short', year: 'numeric' };
     return date.toLocaleDateString('en-MY', options);
+  }
+
+  // Convert date string to YYYY-MM-DD format (for date inputs)
+  // Uses local date to avoid timezone issues
+  formatDateToYYYYMMDD(dateStr) {
+    if (!dateStr) return '';
+
+    // If already in YYYY-MM-DD format, return as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+
+    // Parse date from Notion API (may include time and timezone)
+    // Use local date components to avoid timezone offset issues
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
   }
 
   escapeHtml(text) {

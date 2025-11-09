@@ -95,6 +95,9 @@
               <span id="eventListTitle">All Events</span>
             </h2>
             <div class="calendar-events-actions">
+              <button class="holiday-info-btn" id="holidayInfoBtn" title="View Holidays">
+                <i data-lucide="info"></i>
+              </button>
               <button class="clear-filter-btn" id="clearFilterBtn" style="display: none;">
                 <i data-lucide="x"></i>
                 <span>Clear Filter</span>
@@ -312,6 +315,24 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Holiday Info Modal -->
+  <div class="modal" id="holidayModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <i data-lucide="calendar-days"></i>
+          Malaysian Public Holidays <span id="holidayYear"></span>
+        </h2>
+        <button class="modal-close" data-modal="holidayModal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="holiday-list" id="holidayList">
+        <!-- Holidays will be dynamically inserted here -->
+      </div>
     </div>
   </div>
 
