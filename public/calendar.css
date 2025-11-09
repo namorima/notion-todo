@@ -190,34 +190,39 @@
 /* Mobile tooltip for calendar days */
 .calendar-day-tooltip {
   position: fixed;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.9);
   color: var(--text-white);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: 20px;
   font-size: var(--font-sm);
+  font-weight: 500;
   z-index: 10000;
   pointer-events: none;
   white-space: nowrap;
-  max-width: 90vw;
+  max-width: 85vw;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   display: none;
+  text-align: center;
 }
 
 .calendar-day-tooltip.show {
   display: block;
-  animation: tooltipFadeIn 0.2s ease-out;
+  animation: tooltipSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes tooltipFadeIn {
+@keyframes tooltipSlideDown {
   from {
     opacity: 0;
-    transform: translateY(-5px);
+    transform: translateX(-50%) translateY(-10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -571,6 +576,9 @@
     width: 44px;
     height: 44px;
     font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .clear-filter-btn {
@@ -579,6 +587,9 @@
     padding: 0;
     min-width: auto;
     border-radius: var(--radius-round);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .clear-filter-btn span {
@@ -586,8 +597,11 @@
   }
 
   .clear-filter-btn i {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.2rem;
+    margin: 0;
   }
 }
 

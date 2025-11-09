@@ -708,15 +708,10 @@ class NotionManager {
       const tooltipText = dayElement.getAttribute('title');
 
       if (tooltipText) {
-        // Get touch position
-        const touch = e.touches[0];
-        const x = touch.clientX;
-        const y = touch.clientY;
-
-        // Position tooltip above finger
+        // Position tooltip at top center of screen
         tooltip.textContent = tooltipText;
-        tooltip.style.left = `${x}px`;
-        tooltip.style.top = `${y - 60}px`;
+        tooltip.style.left = '50%';
+        tooltip.style.top = '20px';
         tooltip.style.transform = 'translateX(-50%)';
         tooltip.classList.add('show');
 
