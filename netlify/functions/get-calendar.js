@@ -1,10 +1,11 @@
 import fetch from 'node-fetch';
 import { requireAuth, createResponse, handleCORS } from './utils/auth.js';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const CALENDAR_DATABASE_ID = process.env.CALENDAR_DATABASE_ID;
+const SUPABASE_URL = 'https://fgvzzeaygassjvicxgli.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 export async function handler(event, context) {
   // Handle CORS preflight
@@ -71,26 +72,32 @@ export async function handler(event, context) {
       };
     });
 
-    // Load Malaysia Holidays from JSON file
+    // Load Malaysia Holidays from Supabase
     let holidays = [];
     try {
-      const currentYear = new Date().getFullYear();
-      // Use path from project root - Netlify Functions run from project root
-      const holidaysFile = join(process.cwd(), 'public', 'holidays.json');
+      if (!SUPABASE_KEY) {
+        console.warn('⚠️ SUPABASE_KEY not configured, holidays will be empty');
+      } else {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const currentYear = new Date().getFullYear();
+        const holidayState = process.env.HOLIDAY_STATE || 'Kelantan';
 
-      if (existsSync(holidaysFile)) {
-        const holidayFileContent = readFileSync(holidaysFile, 'utf-8');
-        const holidayData = JSON.parse(holidayFileContent);
+        const { data, error } = await supabase
+          .from('holidays')
+          .select('date, name')
+          .eq('year', currentYear)
+          .eq('state', holidayState)
+          .order('date', { ascending: true });
 
-        if (holidayData.year === currentYear) {
-          holidays = holidayData.holidays;
-          console.log(`✅ Loaded ${holidays.length} holidays for ${holidayData.state} ${currentYear}`);
-        } else {
-          console.log(`⚠️ Holiday data is for ${holidayData.year}, but current year is ${currentYear}`);
+        if (error) {
+          console.error('❌ Error fetching holidays from Supabase:', error);
+        } else if (data) {
+          holidays = data;
+          console.log(`✅ Loaded ${holidays.length} holidays for ${holidayState} ${currentYear} from Supabase`);
         }
       }
     } catch (holidayError) {
-      console.error('Error loading holidays:', holidayError);
+      console.error('Error loading holidays from Supabase:', holidayError);
     }
 
     return createResponse(200, { calendar, holidays });

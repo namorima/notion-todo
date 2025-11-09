@@ -89,6 +89,7 @@ logs
 # claude file
 .claude/
 claude.md
+.mcp.json
 
 cookies.txt
 
