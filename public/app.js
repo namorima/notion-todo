@@ -395,7 +395,8 @@ class NotionManager {
 
     // Check for event status (done or not)
     const hasCompletedEvent = events.some(e => e.done === true);
-    const hasCancelledEvent = events.some(e => e.done === false && e.tags && e.tags.includes('Cancelled'));
+    // Show X for any incomplete events (not done)
+    const hasIncompleteEvent = events.some(e => e.done === false || !e.done);
 
     let tooltip = '';
     if (events.length > 0) {
@@ -411,7 +412,8 @@ class NotionManager {
     if (hasCompletedEvent) {
       statusIcons += '<span class="event-status-icon done">✓</span>';
     }
-    if (hasCancelledEvent) {
+    if (hasIncompleteEvent && !hasCompletedEvent) {
+      // Only show X if not all events are done
       statusIcons += '<span class="event-status-icon cancelled">✕</span>';
     }
 

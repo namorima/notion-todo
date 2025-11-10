@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visual Test - Calendar Features</title>
+  <link rel="stylesheet" href="public/styles.css">
+  <link rel="stylesheet" href="public/calendar.css">
+  <style>
+    body {
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .test-section {
+      margin: 30px 0;
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    .calendar-day-demo {
+      display: inline-flex;
+      margin: 10px;
+      width: 60px;
+      height: 60px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Visual Test Page</h1>
+
+  <!-- Test 1: Holiday Form Buttons -->
+  <div class="test-section">
+    <h2>1. Holiday Form Buttons</h2>
+    <form id="holidayForm">
+      <div class="form-actions">
+        <button type="button" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">
+          <span>Save Holiday</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Test 2: Calendar Status Icons -->
+  <div class="test-section">
+    <h2>2. Calendar Status Icons</h2>
+
+    <h3>Event Done (Green ✓)</h3>
+    <div class="calendar-day has-event" style="position: relative;">
+      <span class="day-number">15</span>
+      <span class="event-status-icon done">✓</span>
+    </div>
+
+    <h3>Event Incomplete (Red ✕)</h3>
+    <div class="calendar-day has-event" style="position: relative;">
+      <span class="day-number">20</span>
+      <span class="event-status-icon cancelled">✕</span>
+    </div>
+
+    <h3>Regular Event (No Icon)</h3>
+    <div class="calendar-day has-event" style="position: relative;">
+      <span class="day-number">25</span>
+    </div>
+  </div>
+
+  <!-- Test 3: Other Month Opacity -->
+  <div class="test-section">
+    <h2>3. Other Month Events (50% Opacity)</h2>
+
+    <h3>Current Month Event</h3>
+    <div class="calendar-day has-event" style="position: relative;">
+      <span class="day-number">10</span>
+    </div>
+
+    <h3>Previous Month Event (50% opacity)</h3>
+    <div class="calendar-day has-event other-month other-month-with-event" style="position: relative;">
+      <span class="day-number">28</span>
+    </div>
+  </div>
+
+  <!-- Test 4: Combined States -->
+  <div class="test-section">
+    <h2>4. Combined States</h2>
+
+    <div class="calendar-day-demo calendar-day today has-event" style="position: relative;">
+      <span class="day-number">9</span>
+      <span class="event-status-icon done">✓</span>
+    </div>
+
+    <div class="calendar-day-demo calendar-day weekend has-event" style="position: relative;">
+      <span class="day-number">11</span>
+      <span class="event-status-icon cancelled">✕</span>
+    </div>
+
+    <div class="calendar-day-demo calendar-day is-holiday has-event" style="position: relative;">
+      <span class="day-number">25</span>
+      <span class="event-status-icon done">✓</span>
+    </div>
+  </div>
+
+  <script>
+    // Prevent form submission
+    document.getElementById('holidayForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('Form submission prevented (test mode)');
+    });
+
+    console.log('Visual test page loaded');
+    console.log('CSS files loaded:', {
+      styles: !!document.querySelector('link[href*="styles.css"]'),
+      calendar: !!document.querySelector('link[href*="calendar.css"]')
+    });
+  </script>
+</body>
+</html>
