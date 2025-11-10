@@ -172,6 +172,11 @@
   opacity: 0.5;
 }
 
+/* Previous/Next month with events - 50% opacity */
+.calendar-day.other-month-with-event.has-event {
+  opacity: 0.5;
+}
+
 .calendar-day.weekend {
   background: rgba(255, 165, 0, 0.5);
 }
@@ -657,4 +662,38 @@
   font-size: var(--font-xs);
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* ========================================
+   Event Status Icons on Calendar Grid
+   ======================================== */
+
+.event-status-icon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  color: white;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.event-status-icon.done {
+  background: var(--green-check);
+}
+
+.event-status-icon.cancelled {
+  background: var(--error);
+}
+
+/* When both icons exist, stack them */
+.calendar-day .event-status-icon.done + .event-status-icon.cancelled {
+  right: 20px;
 }

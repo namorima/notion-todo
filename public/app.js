@@ -391,6 +391,11 @@ class NotionManager {
     if (isWeekend) classes.push('weekend');
     if (events.length > 0) classes.push('has-event');
     if (holiday) classes.push('is-holiday');
+    if (isPrevMonth || isNextMonth) classes.push('other-month-with-event');
+
+    // Check for event status (done or not)
+    const hasCompletedEvent = events.some(e => e.done === true);
+    const hasCancelledEvent = events.some(e => e.done === false && e.tags && e.tags.includes('Cancelled'));
 
     let tooltip = '';
     if (events.length > 0) {
@@ -401,9 +406,19 @@ class NotionManager {
       tooltip += holiday.name;
     }
 
+    // Build status icons
+    let statusIcons = '';
+    if (hasCompletedEvent) {
+      statusIcons += '<span class="event-status-icon done">✓</span>';
+    }
+    if (hasCancelledEvent) {
+      statusIcons += '<span class="event-status-icon cancelled">✕</span>';
+    }
+
     return `
       <div class="${classes.join(' ')}" data-date="${dateStr}" title="${tooltip}">
         <span class="day-number">${day}</span>
+        ${statusIcons}
       </div>
     `;
   }
@@ -638,6 +653,11 @@ class NotionManager {
       this.handleEditEvent(e.target);
     });
 
+    document.getElementById('holidayForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.handleHolidaySubmit(e.target);
+    });
+
     // Delegated event listeners for dynamic content
     document.addEventListener('click', (e) => {
       // Todo actions
@@ -666,6 +686,20 @@ class NotionManager {
       } else if (e.target.closest('.event-action-btn.delete')) {
         const id = e.target.closest('.event-action-btn.delete').dataset.id;
         this.deleteEvent(id);
+      }
+
+      // Holiday actions
+      if (e.target.closest('.holiday-action-btn.edit')) {
+        const id = e.target.closest('.holiday-action-btn.edit').dataset.id;
+        this.openEditHolidayModal(id);
+      } else if (e.target.closest('.holiday-action-btn.delete')) {
+        const id = e.target.closest('.holiday-action-btn.delete').dataset.id;
+        this.deleteHoliday(id);
+      }
+
+      // Add holiday button
+      if (e.target.closest('#addHolidayBtn')) {
+        this.openAddHolidayModal();
       }
 
       // Calendar day click
@@ -872,7 +906,14 @@ class NotionManager {
                 <span>${formattedDate} (${dayName})</span>
               </div>
             </div>
-            <div class="holiday-badge">Holiday</div>
+            <div class="holiday-actions">
+              <button class="holiday-action-btn edit" data-id="${holiday.id}" title="Edit">
+                <i data-lucide="edit-2"></i>
+              </button>
+              <button class="holiday-action-btn delete" data-id="${holiday.id}" title="Delete">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
           </div>
         `;
       }).join('');
@@ -1159,6 +1200,114 @@ class NotionManager {
     } catch (error) {
       console.error('Error deleting event:', error);
       this.showError('Failed to delete event. Please try again.');
+    }
+  }
+
+  // ==================== HOLIDAY CRUD ====================
+
+  openAddHolidayModal() {
+    document.getElementById('holidayFormTitle').textContent = 'Add Holiday';
+    document.getElementById('holidayId').value = '';
+    document.getElementById('holidayDate').value = '';
+    document.getElementById('holidayName').value = '';
+    document.getElementById('holidayState').value = 'Kelantan'; // Default state
+
+    this.closeModal('holidayModal');
+    this.openModal('addEditHolidayModal');
+  }
+
+  openEditHolidayModal(id) {
+    // Convert id to number for comparison (dataset.id is string)
+    const holidayId = parseInt(id);
+    const holiday = this.holidays.find(h => h.id === holidayId);
+
+    if (!holiday) {
+      console.error('Holiday not found with ID:', id);
+      this.showError('Holiday not found');
+      return;
+    }
+
+    document.getElementById('holidayFormTitle').textContent = 'Edit Holiday';
+    document.getElementById('holidayId').value = holiday.id;
+    document.getElementById('holidayDate').value = holiday.date;
+    document.getElementById('holidayName').value = holiday.name;
+    document.getElementById('holidayState').value = holiday.state;
+
+    this.closeModal('holidayModal');
+    this.openModal('addEditHolidayModal');
+  }
+
+  async handleHolidaySubmit(form) {
+    const formData = new FormData(form);
+    const holidayId = formData.get('id');
+
+    const data = {
+      date: formData.get('date'),
+      name: formData.get('name'),
+      state: formData.get('state')
+    };
+
+    // Validate
+    if (!data.date || !data.name || !data.state) {
+      this.showError('Please fill all required fields');
+      return;
+    }
+
+    try {
+      if (holidayId) {
+        // Update existing holiday
+        data.id = holidayId;
+        await this.apiRequest('edit-holiday', {
+          method: 'POST',
+          body: data
+        });
+        this.showSuccess('Holiday updated successfully!');
+      } else {
+        // Add new holiday
+        // Extract year from date
+        const year = new Date(data.date).getFullYear();
+        data.year = year;
+
+        await this.apiRequest('add-holiday', {
+          method: 'POST',
+          body: data
+        });
+        this.showSuccess('Holiday added successfully!');
+      }
+
+      this.closeModal('addEditHolidayModal');
+      await this.loadData();
+      this.render();
+    } catch (error) {
+      console.error('Error saving holiday:', error);
+      this.showError('Failed to save holiday. Please try again.');
+    }
+  }
+
+  async deleteHoliday(id) {
+    if (!confirm('Are you sure you want to delete this holiday?')) return;
+
+    try {
+      // Convert id to number (dataset.id is string)
+      const holidayId = parseInt(id);
+
+      await this.apiRequest('delete-holiday', {
+        method: 'POST',
+        body: { id: holidayId }
+      });
+
+      await this.loadData();
+      this.render();
+      this.showSuccess('Holiday deleted successfully!');
+
+      // Refresh holiday modal if open
+      const modal = document.getElementById('holidayModal');
+      if (modal.classList.contains('active')) {
+        this.showHolidayModal();
+      }
+    } catch (error) {
+      console.error('Error deleting holiday:', error);
+      this.showError('Failed to delete holiday. Please try again.');
     }
   }
 

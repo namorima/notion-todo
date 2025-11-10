@@ -84,7 +84,7 @@ export async function handler(event, context) {
 
         const { data, error } = await supabase
           .from('holidays')
-          .select('date, name')
+          .select('id, date, name, state, year')
           .eq('year', currentYear)
           .eq('state', holidayState)
           .order('date', { ascending: true });
