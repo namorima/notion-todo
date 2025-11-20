@@ -17,19 +17,23 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 - **JWT Authentication** - Secure login with token-based auth (24-hour expiry)
 - **Serverless Backend** - Netlify Functions for auto-scaling
 - **Dual View System** - Todo list and calendar in one application
-- **Malaysian Holidays** - Automatic integration of public holidays
-- **Interactive Calendar** - Visual grid with event indicators
+- **Malaysian Holidays** - Stored in Supabase with full CRUD operations
+- **Interactive Calendar** - Visual grid with event indicators and status badges
 - **Responsive Design** - Mobile-first, fully optimized for all devices
 - **Grid/List View** - Toggle between card and list layouts (desktop only)
 - **CSS Variables** - Consistent design system with standardized styling
 - **Loading Indicators** - Visual feedback when fetching data
 - **Date Filtering** - Click calendar dates to filter events with clear button
+- **Sort Controls** - Toggle sort order (newest/oldest first) for todos
 
 ### 📅 Calendar Features
 
 - **Event Management** - Add, edit, delete calendar events
+- **Holiday Management** - Add, edit, delete holidays via modal interface
+- **Supabase Integration** - Holidays stored in cloud database
 - **Date Ranges** - Support for multi-day events
 - **Visual Indicators** - Blue circles for events, red borders for holidays
+- **Status Badges** - ✓ (green) for completed events, ✕ (red) for incomplete
 - **Weekend Highlighting** - Friday and Saturday displayed in blue (30% opacity)
 - **Weekend Events** - Special gradient background for events on weekends
 - **Event Tooltips** - Hover over dates to see event names
@@ -42,10 +46,14 @@ A modern serverless web application for managing Notion TODO lists and calendar 
 
 - **Category System** - Organize with emojis (🔥 Penting, ⚡ Segera, 👤 Pribadi)
 - **Status Tracking** - Not Started, In Progress, Done
-- **Due Date Management** - Visual indicators for overdue tasks
+- **Due Date Management** - Visual indicators for overdue tasks, shows todos without due date
+- **Created Date Display** - Grey text with 50% opacity showing creation time
+- **Smart Sorting** - Not Done items first, Done items at bottom (both sorted by created date)
+- **Sort Toggle** - Arrow button to switch between newest/oldest first
 - **Filtering** - Quick filters by status with count badges (All, Completed, Overdue, Pending)
 - **Real-time Updates** - Changes reflected immediately
 - **Loading Indicator** - Animated spinner while fetching todos
+- **Date Precision** - Uses local date components to avoid timezone offset issues
 - **Mobile Optimized** - Filter buttons show icons only, grid/list toggle hidden
 
 ### 🖥️ CLI Interface (Legacy)
@@ -93,14 +101,18 @@ A modern serverless web application for managing Notion TODO lists and calendar 
    DATABASE_ID=your_todo_database_id_here
    CALENDAR_DATABASE_ID=your_calendar_database_id_here
    APP_PASSWORD=akmal
+   JWT_SECRET=your_random_secret_key
    HOLIDAY_STATE=Kelantan
+   SUPABASE_KEY=your_supabase_anon_key
    ```
 
-4. **Fetch holiday data (optional)**
+4. **Setup Supabase (for holidays)**
 
-   ```bash
-   node fetch-holidays.js
-   ```
+   - Create a free account at [Supabase](https://supabase.com)
+   - Create a new project
+   - Create `holidays` table with schema (see `create-table.sql`)
+   - Copy your anon/service key to `SUPABASE_KEY` in `.env`
+   - Optional: Migrate existing data with `node migrate-holidays.js`
 
 5. **Run the application**
 
@@ -214,18 +226,21 @@ notion-manager/
 │       ├── edit-todo.js    # Update todo
 │       ├── done-todo.js    # Mark todo done
 │       ├── delete-todo.js  # Delete todo
-│       ├── get-calendar.js # Fetch calendar
+│       ├── get-calendar.js # Fetch calendar + holidays
 │       ├── add-calendar.js # Create event
 │       ├── edit-calendar.js # Update event
 │       ├── done-calendar.js # Mark event done
-│       └── delete-calendar.js # Delete event
+│       ├── delete-calendar.js # Delete event
+│       ├── add-holiday.js  # Add holiday (Supabase)
+│       ├── edit-holiday.js # Edit holiday (Supabase)
+│       └── delete-holiday.js # Delete holiday (Supabase)
 ├── public/                 # Static frontend (PRIMARY)
 │   ├── login.html          # Login page ✅
 │   ├── index.html          # Main app ✅
 │   ├── styles.css          # Main stylesheet ✅
 │   ├── calendar.css        # Calendar styles ✅
 │   ├── app.js              # Client-side logic ✅
-│   └── holidays.json       # Malaysian holidays
+│   └── holidays.json       # Malaysian holidays (LEGACY)
 ├── server.js               # Express server (LEGACY)
 ├── index.ejs               # Server-rendered UI (LEGACY)
 ├── login.ejs               # Server-rendered auth (LEGACY)
@@ -263,7 +278,9 @@ node fetch-holidays.js
 | `DATABASE_ID`          | TODO database ID             | Required      |
 | `CALENDAR_DATABASE_ID` | Calendar database ID         | Required      |
 | `APP_PASSWORD`         | Login password               | [edit in env] |
+| `JWT_SECRET`           | JWT signing secret           | Required      |
 | `HOLIDAY_STATE`        | Malaysian state for holidays | `Kelantan`    |
+| `SUPABASE_KEY`         | Supabase anon/service key    | Required      |
 
 ## 🚢 Deployment
 
@@ -283,6 +300,7 @@ Serverless deployment with auto-scaling and zero cold starts.
    - `APP_PASSWORD`
    - `JWT_SECRET`
    - `HOLIDAY_STATE`
+   - `SUPABASE_KEY`
 5. Deploy: `netlify deploy --prod`
 
 **Advantages:**
@@ -362,13 +380,14 @@ Edit `index.ejs`:
 
 **Solution:**
 
-```bash
-# Regenerate holidays.json
-node fetch-holidays.js
-
-# Check holidays.json year matches current year
-cat holidays.json
-```
+1. Verify `SUPABASE_KEY` is set in `.env`
+2. Check Supabase `holidays` table exists
+3. Open holiday modal (!) to manually add holidays
+4. Or migrate from JSON:
+   ```bash
+   node migrate-holidays.js
+   ```
+5. Check server logs for "✅ Loaded X holidays" message
 
 ### Calendar Events Not Loading
 
@@ -495,13 +514,19 @@ If you encounter issues:
 
 🎉 **Status:** Production Ready!
 
-**Latest Updates (v2.0.1):**
+**Latest Updates (v2.0.2):**
+- ✅ Supabase integration for holidays database
+- ✅ Holiday CRUD operations (Add, Edit, Delete via UI)
+- ✅ Event status badges on calendar grid (✓ done, ✕ incomplete)
+- ✅ Todo created date display with grey styling
+- ✅ Smart sorting: Not Done first, Done at bottom
+- ✅ Sort toggle button (newest/oldest first)
+- ✅ Shows todos without due date
+- ✅ Fixed timezone offset issues in date display
 - ✅ Mobile responsive layout for Calendar and Todos tabs
 - ✅ Calendar date filtering with clear button
 - ✅ Loading indicators for todos
 - ✅ Weekend events visual highlighting
-- ✅ Completion status indicator (green button when done)
 - ✅ Filter button count badges
-- ✅ Previous/next month opacity styling
 
-See [FINAL_STATUS.md](FINAL_STATUS.md) for detailed migration information.
+See [SUPABASE_MIGRATION.md](SUPABASE_MIGRATION.md) and [QUICK_START.md](QUICK_START.md) for detailed setup information.

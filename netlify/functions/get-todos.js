@@ -68,8 +68,13 @@ export async function handler(event, context) {
 
     const formatDate = (dateStr) => {
       if (!dateStr) return '-';
+      // Use local date components to avoid timezone offset
       const date = new Date(dateStr);
-      return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+      const day = String(date.getDate()).padStart(2, '0');
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
     };
 
     const formatCreatedTime = (dateStr) => {
@@ -103,10 +108,8 @@ export async function handler(event, context) {
       };
     });
 
-    // Sort: Not Done (newest first) then Done (newest first)
+    // Sort by created date (newest first by default)
     todos.sort((a, b) => {
-      if (a.status !== 'Done' && b.status === 'Done') return -1;
-      if (a.status === 'Done' && b.status !== 'Done') return 1;
       return new Date(b.createdTime) - new Date(a.createdTime);
     });
 

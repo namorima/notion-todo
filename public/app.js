@@ -1,5 +1,5 @@
 // Notion Manager - Client-Side Application
-// Version 2.0.0 - Netlify Serverless Edition
+// Version 2.0.2 - Netlify Serverless Edition
 
 class NotionManager {
   constructor() {
@@ -9,6 +9,7 @@ class NotionManager {
     this.holidays = [];
     this.currentFilter = 'all';
     this.currentView = 'grid';
+    this.sortOrder = 'desc'; // desc = newest first, asc = oldest first
     this.currentMonth = new Date().getMonth();
     this.currentYear = new Date().getFullYear();
     this.selectedDate = null;
@@ -233,9 +234,13 @@ class NotionManager {
         break;
       case 'overdue':
         filtered = filtered.filter(t => {
-          if (t.status === 'Done') return false;
+          if (t.status === 'Done' || !t.dueDate) return false;
+          // Normalize dates to midnight for fair comparison
           const dueDate = new Date(t.dueDate);
-          return dueDate < new Date();
+          dueDate.setHours(0, 0, 0, 0);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          return dueDate < today;
         });
         break;
       case 'pending':
@@ -246,14 +251,38 @@ class NotionManager {
         break;
     }
 
+    // Apply sorting: Not Done first (sorted by created date), then Done at bottom (sorted by created date)
+    filtered.sort((a, b) => {
+      // First, separate by Done status
+      const aIsDone = a.status === 'Done';
+      const bIsDone = b.status === 'Done';
+
+      if (aIsDone && !bIsDone) return 1;  // a is Done, b is not → a goes down
+      if (!aIsDone && bIsDone) return -1; // a is not Done, b is → a goes up
+
+      // If both have same Done status, sort by created date
+      const dateA = new Date(a.createdTime);
+      const dateB = new Date(b.createdTime);
+      return this.sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+    });
+
     return filtered;
   }
 
   createTodoCard(todo) {
-    const isOverdue = new Date(todo.dueDate) < new Date() && todo.status !== 'Done';
+    // Normalize dates to midnight for fair comparison
+    let isOverdue = false;
+    if (todo.dueDate && todo.status !== 'Done') {
+      const dueDate = new Date(todo.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      isOverdue = dueDate < today;
+    }
     const categoryEmoji = this.getCategoryEmoji(todo.kategori);
     const statusInfo = this.getStatusInfo(todo.status);
     const formattedDate = this.formatDate(todo.dueDate);
+    const formattedCreatedTime = todo.createdTimeFormatted || this.formatDate(todo.createdTime);
 
     return `
       <div class="todo-card ${isOverdue ? 'overdue' : ''} ${todo.status === 'Done' ? 'done' : ''}">
@@ -262,6 +291,10 @@ class NotionManager {
           ${todo.status && todo.status !== 'Not started' ? `<span class="todo-status ${statusInfo.class}">${statusInfo.label}</span>` : ''}
         </div>
         <h3 class="todo-title">${this.escapeHtml(todo.name)}</h3>
+        <div class="todo-created-date">
+          <i data-lucide="clock"></i>
+          <span>Created: ${formattedCreatedTime}</span>
+        </div>
         <div class="todo-footer">
           <div class="todo-date ${isOverdue ? 'overdue' : ''}">
             <i data-lucide="calendar"></i>
@@ -607,6 +640,11 @@ class NotionManager {
       });
     });
 
+    // Sort toggle button
+    document.getElementById('sortToggleBtn').addEventListener('click', () => {
+      this.toggleSort();
+    });
+
     // Calendar navigation
     document.getElementById('prevMonthBtn').addEventListener('click', () => {
       this.changeMonth(-1);
@@ -810,6 +848,22 @@ class NotionManager {
     // Update grid class
     const grid = document.getElementById('todosGrid');
     grid.classList.toggle('list-view', view === 'list');
+  }
+
+  toggleSort() {
+    // Toggle between desc and asc
+    this.sortOrder = this.sortOrder === 'desc' ? 'asc' : 'desc';
+
+    // Update button icon
+    const sortBtn = document.getElementById('sortToggleBtn');
+    const icon = sortBtn.querySelector('i');
+    icon.setAttribute('data-lucide', this.sortOrder === 'desc' ? 'arrow-down' : 'arrow-up');
+
+    // Re-render todos
+    this.renderTodos();
+
+    // Reinitialize icons
+    if (window.lucide) lucide.createIcons();
   }
 
   changeMonth(delta) {
@@ -1335,9 +1389,13 @@ class NotionManager {
 
   formatDate(dateStr) {
     if (!dateStr) return '';
+    // Use local date components to avoid timezone offset
     const date = new Date(dateStr);
-    const options = { day: 'numeric', month: 'short', year: 'numeric' };
-    return date.toLocaleDateString('en-MY', options);
+    const day = date.getDate();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
   }
 
   // Convert date string to YYYY-MM-DD format (for date inputs)
