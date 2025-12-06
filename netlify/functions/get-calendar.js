@@ -20,20 +20,39 @@ export async function handler(event, context) {
   }
 
   try {
-    // Fetch Calendar Events from Notion
-    const calendarResponse = await fetch(`https://api.notion.com/v1/databases/${CALENDAR_DATABASE_ID}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_API_KEY}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sorts: [{ property: 'Date', direction: 'descending' }]
-      })
-    });
+    // Fetch ALL Calendar Events from Notion using pagination
+    let allResults = [];
+    let hasMore = true;
+    let startCursor = undefined;
 
-    const calendarData = await calendarResponse.json();
+    while (hasMore) {
+      const body = {
+        sorts: [{ property: 'Date', direction: 'descending' }]
+      };
+      
+      if (startCursor) {
+        body.start_cursor = startCursor;
+      }
+
+      const calendarResponse = await fetch(`https://api.notion.com/v1/databases/${CALENDAR_DATABASE_ID}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_API_KEY}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const calendarData = await calendarResponse.json();
+      
+      if (calendarData.results) {
+        allResults = allResults.concat(calendarData.results);
+      }
+      
+      hasMore = calendarData.has_more;
+      startCursor = calendarData.next_cursor;
+    }
 
     const formatDate = (dateStr) => {
       if (!dateStr) return '-';
@@ -41,7 +60,7 @@ export async function handler(event, context) {
       return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    const calendar = calendarData.results.map(page => {
+    const calendar = allResults.map(page => {
       const name = page.properties.Name?.title?.[0]?.plain_text || 'Untitled';
       const dateObj = page.properties.Date?.date;
       const dateStart = dateObj?.start || null;

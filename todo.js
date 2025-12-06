@@ -429,23 +429,58 @@ async function loadTodos() {
 
   try {
     progress.update("Menyambung ke Notion");
-    // Query database
-    const res = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        sorts: [
-          {
-            property: "status",
-            direction: "ascending" // "Not started" akan atas, "Done" bawah
-          }
-        ]
-      })
-    });
+    
+    // Fetch ALL data using pagination
+    let allResults = [];
+    let hasMore = true;
+    let startCursor = undefined;
+    
+    while (hasMore) {
+      const body = startCursor ? { start_cursor: startCursor } : {};
+      
+      const res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+      
+      if (data.results) {
+        allResults = allResults.concat(data.results);
+      }
+      
+      hasMore = data.has_more;
+      startCursor = data.next_cursor;
+      
+      progress.update(`Memuat data (${allResults.length} items)`);
+    }
 
     progress.update("Memproses data");
-    const data = await res.json();
-    allTodos = data.results;
+    
+    // Sort locally: Done items at bottom, then by created_time (newest first)
+    allTodos = allResults.sort((a, b) => {
+      const statusA = a.properties["status"]?.status?.name || "Unknown";
+      const statusB = b.properties["status"]?.status?.name || "Unknown";
+      
+      // First, sort by status - Done items go to bottom
+      const isDoneA = statusA === "Done" ? 1 : 0;
+      const isDoneB = statusB === "Done" ? 1 : 0;
+      
+      if (isDoneA !== isDoneB) {
+        return isDoneA - isDoneB; // Non-Done (0) comes before Done (1)
+      }
+      
+      // Within same status group, sort by created_time (newest first)
+      // Try both possible locations for created time
+      const createdTimeA = a.created_time || a.properties["Created time"]?.created_time;
+      const createdTimeB = b.created_time || b.properties["Created time"]?.created_time;
+      
+      const createdA = new Date(createdTimeA);
+      const createdB = new Date(createdTimeB);
+      return createdB - createdA; // Descending order (newest first)
+    });
+    
     progress.stop();
   } catch (error) {
     progress.stop();
@@ -822,6 +857,8 @@ async function handleAddTodo() {
     });
 
     await addTodo(taskName.trim(), kategori);
+    // Add small delay to allow Notion API to process
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await loadTodos();
     displayTodos();
     await showOptions();
@@ -900,6 +937,8 @@ async function handleAddTodoWithDueDate() {
 
     const due = dueDate;
     await addTodoWithDueDate(taskName.trim(), kategori, due);
+    // Add small delay to allow Notion API to process
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await loadTodos();
     displayTodos();
     await showOptions();

@@ -100,3 +100,7 @@ FINAL_STATUS.md
 
 # Netlify
 .netlify/
+
+# Notion
+check-newest.js
+todo.js

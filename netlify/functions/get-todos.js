@@ -17,20 +17,39 @@ export async function handler(event, context) {
   }
 
   try {
-    // Fetch Todos from Notion
-    const todoResponse = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${NOTION_API_KEY}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sorts: [{ property: 'due date', direction: 'ascending' }]
-      })
-    });
+    // Fetch ALL Todos from Notion using pagination
+    let allResults = [];
+    let hasMore = true;
+    let startCursor = undefined;
 
-    const todoData = await todoResponse.json();
+    while (hasMore) {
+      const body = {
+        sorts: [{ property: 'due date', direction: 'ascending' }]
+      };
+      
+      if (startCursor) {
+        body.start_cursor = startCursor;
+      }
+
+      const todoResponse = await fetch(`https://api.notion.com/v1/databases/${DATABASE_ID}/query`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NOTION_API_KEY}`,
+          'Notion-Version': '2022-06-28',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      const todoData = await todoResponse.json();
+      
+      if (todoData.results) {
+        allResults = allResults.concat(todoData.results);
+      }
+      
+      hasMore = todoData.has_more;
+      startCursor = todoData.next_cursor;
+    }
 
     // Helper functions
     const getCategoryEmoji = (category) => {
@@ -83,7 +102,7 @@ export async function handler(event, context) {
     };
 
     // Transform data
-    const todos = todoData.results.map(page => {
+    const todos = allResults.map(page => {
       const name = page.properties.name?.title?.[0]?.plain_text || 'Untitled';
       const status = page.properties.status?.status?.name || 'Not started';
       const kategori = page.properties.kategori?.select?.name || 'Tiada kategori';
