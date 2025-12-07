@@ -431,6 +431,9 @@ class NotionManager {
     // Show X for any incomplete events (not done)
     const hasIncompleteEvent = events.some(e => e.done === false || !e.done);
 
+    // Check if date is in the past (before today)
+    const isPastDate = dateStr < todayStr;
+
     let tooltip = '';
     if (events.length > 0) {
       tooltip += events.map(e => e.name).join(', ');
@@ -446,8 +449,13 @@ class NotionManager {
       statusIcons += '<span class="event-status-icon done">✓</span>';
     }
     if (hasIncompleteEvent && !hasCompletedEvent) {
-      // Only show X if not all events are done
-      statusIcons += '<span class="event-status-icon cancelled">✕</span>';
+      // If date has passed, show green checkmark instead of red X
+      if (isPastDate) {
+        statusIcons += '<span class="event-status-icon done">✓</span>';
+      } else {
+        // Only show X for future dates with incomplete events
+        statusIcons += '<span class="event-status-icon cancelled">✕</span>';
+      }
     }
 
     return `
